@@ -1123,6 +1123,22 @@
   color: rgba(255, 255, 255, 0.72);
 }
 
+.footerBrandBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.footerBrandCopy {
+  margin: 0;
+  max-width: 320px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .socialRow {
   display: flex;
   gap: 10px;
@@ -1304,6 +1320,14 @@
   .footerBottom div {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .footerBrandBlock {
+    width: 100%;
+  }
+
+  .footerBrandCopy {
+    max-width: 260px;
   }
 
   .footerBottom div {

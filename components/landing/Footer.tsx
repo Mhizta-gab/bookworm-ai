@@ -7,9 +7,11 @@ export function LandingFooter() {
     <footer className={styles.footer}>
       <div className={styles.container}>
         <div className={styles.footerTop}>
-          <div className={styles.brandFooter}>
-            <Brand light />
-            <p>Your voice-first reading companion for books, notes, and ideas</p>
+          <div className={styles.footerBrandBlock}>
+            <div className={styles.brandFooter}>
+              <Brand light />
+            </div>
+            <p className={styles.footerBrandCopy}>Your voice-first reading companion for books, notes, and ideas</p>
           </div>
           <div className={styles.socialRow}>
             <a href="#testimonials" aria-label="Community">

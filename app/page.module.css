@@ -1117,7 +1117,7 @@
   gap: 10px;
 }
 
-.socialRow span {
+.socialRow a {
   width: 34px;
   height: 34px;
   border-radius: 6px;
@@ -1125,7 +1125,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.socialRow a:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
 }
 
 .footerBottom {

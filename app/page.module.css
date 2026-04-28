@@ -11,11 +11,19 @@
 }
 
 .navbarWrap {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(242, 239, 230, 0.94);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(17, 17, 17, 0.22);
 }
 
 .navbar {
-  min-height: 58px;
+  width: min(1120px, calc(100vw - 48px));
+  min-height: 64px;
+  margin: 0 auto;
+  padding: 0 4px;
   display: grid;
   grid-template-columns: auto auto 1fr auto;
   align-items: center;
@@ -27,6 +35,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .brandMark {
@@ -44,10 +53,11 @@
 .brandText,
 .brandTextLight {
   font-family: "Cormorant Garamond", Georgia, serif;
-  font-size: 2rem;
+  font-size: clamp(1.55rem, 2vw, 2rem);
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.03em;
+  white-space: nowrap;
 }
 
 .brandTextLight {
@@ -138,6 +148,7 @@
 
 .heroArtwork {
   position: relative;
+  width: 100%;
   min-height: 320px;
   padding-top: 20px;
 }
@@ -1168,6 +1179,7 @@
 
   .heroArtwork {
     min-height: 360px;
+    overflow: hidden;
   }
 
   .miniPanel {
@@ -1200,17 +1212,81 @@
     width: min(100vw - 24px, 1120px);
   }
 
+  .navbar {
+    width: min(100vw - 24px, 1120px);
+    min-height: 60px;
+    padding: 0;
+    gap: 12px;
+  }
+
+  .brand {
+    max-width: calc(100vw - 132px);
+    gap: 8px;
+  }
+
+  .brandMark {
+    width: 28px;
+    height: 28px;
+  }
+
+  .brandText,
+  .brandTextLight {
+    font-size: clamp(1.2rem, 5.5vw, 1.55rem);
+  }
+
   .hero {
     padding-top: 32px;
   }
 
+  .heroGrid {
+    gap: 20px;
+  }
+
+  .heroArtwork {
+    min-height: 320px;
+    padding-top: 12px;
+    overflow: hidden;
+  }
+
   .miniPanel {
     width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 14px 14px 12px;
   }
 
   .mainPanel {
-    width: 100%;
+    width: calc(100% - 6px);
     margin-left: 0;
+    margin-right: 6px;
+    padding: 16px 14px 14px;
+  }
+
+  .mainPanelHeader strong {
+    font-size: 1.4rem;
+  }
+
+  .mainPanelMeta {
+    font-size: 0.64rem;
+  }
+
+  .sharedBadge {
+    left: 8px;
+    top: 74px;
+    max-width: calc(100% - 32px);
+  }
+
+  .ownerBadge {
+    right: 18px;
+    bottom: 24px;
+  }
+
+  .taskLine {
+    gap: 8px;
+  }
+
+  .taskBar {
+    min-width: 0;
   }
 
   .card,

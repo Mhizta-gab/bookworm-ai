@@ -30,6 +30,10 @@
   gap: 18px;
 }
 
+.navbarOpen {
+  padding-bottom: 12px;
+}
+
 .brand,
 .brandFooter {
   display: inline-flex;
@@ -88,6 +92,69 @@
 .footerBottom a {
   color: inherit;
   text-decoration: none;
+}
+
+.mobileMenuButton,
+.mobileNavLinks,
+.mobileMenuPanel {
+  display: none;
+}
+
+.mobileMenuButton {
+  border: 2px solid #171717;
+  background: #fffdfa;
+  color: #171717;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.18);
+}
+
+.mobileMenuPanel {
+  grid-column: 1 / -1;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateY(-8px);
+  pointer-events: none;
+  transition:
+    max-height 0.3s ease,
+    opacity 0.22s ease,
+    transform 0.22s ease,
+    padding 0.22s ease;
+}
+
+.mobileMenuPanel a {
+  color: #171717;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.mobileMenuPanelOpen {
+  max-height: 260px;
+  opacity: 1;
+  padding: 12px 0 4px;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.mobileMenuCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  margin-top: 4px;
+  padding: 0 16px;
+  border-radius: 4px;
+  border: 2px solid #171717;
+  background: #171717;
+  color: #fff !important;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.25);
 }
 
 .ctaButton,
@@ -1181,6 +1248,19 @@
     display: none;
   }
 
+  .mobileMenuButton {
+    display: inline-flex;
+    justify-self: end;
+  }
+
+  .mobileMenuPanel {
+    display: grid;
+  }
+
+  .navbar > .ctaButton {
+    display: none;
+  }
+
   .heroGrid,
   .featureGrid,
   .splitCard,
@@ -1233,10 +1313,11 @@
     min-height: 60px;
     padding: 0;
     gap: 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .brand {
-    max-width: calc(100vw - 132px);
+    max-width: calc(100vw - 76px);
     gap: 8px;
   }
 

@@ -42,3 +42,6 @@ next-env.d.ts
 
 # documentation
 PRD.md
+
+# clerk configuration (can include secrets)
+/.clerk/

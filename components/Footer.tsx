@@ -8,7 +8,7 @@ export default function Footer() {
           <div className="joinrow">
             <div className="joinushead">
               <div className="joinuscol1"><h1 className="heading white mb0 animation">Join us in the <span className="pinktext">‘worms</span></h1></div>
-              <div className="joinuscol2"><div className="subheading animation pb15">We’ll manage the mundane so you have the space (and brainpower) to create an experience your community can't get enough of.</div>
+              <div className="joinuscol2"><div className="subheading animation pb15">We&apos;ll manage the mundane so you have the space (and brainpower) to create an experience your community can&apos;t get enough of.</div>
                 <Link href="/features" className="button-3 w100 w-inline-block"><div className="btn-text">Learn More</div></Link>
               </div>
             </div>

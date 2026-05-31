@@ -1,13 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
+import { searchBookSegments } from "@/lib/actions/book.actions";
 
-// POST /api/vapi/search-book
-// CRITICAL: This is the Vapi tool call handler.
-// Vapi calls this endpoint during every voice session when the AI needs book content.
-// Must be publicly accessible (deployed on Vercel or exposed via ngrok locally).
-//
-// Request body: { bookId: string, query: string }
-// Response:     { result: string }  ← top 3 relevant segments joined as a single string
+export async function GET() {
+  return NextResponse.json({ status: "ok" });
+}
+
 export async function POST(req: NextRequest) {
-  // TODO: Implement MongoDB text search across BookSegment.content
-  return NextResponse.json({ result: "search-book endpoint — coming soon" }, { status: 501 });
+  try {
+    const body = await req.json();
+    const bookId = typeof body?.bookId === "string" ? body.bookId : "";
+    const query = typeof body?.query === "string" ? body.query : "";
+
+    if (!bookId || !query.trim()) {
+      return NextResponse.json({ result: "Missing bookId or query." }, { status: 400 });
+    }
+
+    const segments = await searchBookSegments(bookId, query, 3);
+
+    if (!segments.length) {
+      return NextResponse.json({ result: "No matching information was found in this book." });
+    }
+
+    return NextResponse.json({
+      result: segments.map((segment) => segment.content).join("\n\n"),
+    });
+  } catch (error) {
+    console.error("Vapi book search failed:", error);
+    return NextResponse.json({ result: "Error searching this book." }, { status: 500 });
+  }
 }

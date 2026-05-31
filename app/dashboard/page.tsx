@@ -1,13 +1,25 @@
 import { ArrowRight, AudioLines, Bookmark, BookOpen, Highlighter, UploadCloud } from "lucide-react";
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
 import { BookLibraryCard } from "@/components/dashboard/BookLibraryCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { toDashboardBooks } from "@/components/dashboard/book-view-model";
 import styles from "@/components/dashboard/dashboard.module.css";
 import { dashboardBooks, transcriptPreview } from "@/components/dashboard/mock-data";
+import { getAllBooks } from "@/lib/actions/book.actions";
 
-export default function HomePage() {
-  const currentBook = dashboardBooks[0];
-  const recentBooks = dashboardBooks.slice(1, 4);
+export default async function HomePage() {
+  const { userId } = await auth();
+  const realBooks = userId
+    ? await getAllBooks().catch((error) => {
+        console.error("Failed to load dashboard books:", error);
+        return [];
+      })
+    : [];
+  const books = realBooks.length ? toDashboardBooks(realBooks) : dashboardBooks;
+  const currentBook = books[0];
+  const recentBooks = books.slice(1, 4);
+  const isDemoState = !realBooks.length;
 
   return (
     <>
@@ -22,6 +34,27 @@ export default function HomePage() {
           </Link>
         }
       />
+
+      {isDemoState ? (
+        <section className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <div>
+              <p className={styles.panelLabel}>{userId ? "Empty library" : "Preview mode"}</p>
+              <h2 className={styles.panelTitle}>
+                {userId ? "Upload your first book to activate the workspace" : "Sign in to make this reading desk yours"}
+              </h2>
+            </div>
+            <Link href={userId ? "/dashboard/books/new" : "/dashboard/library"} className={styles.primaryButton}>
+              {userId ? "Upload book" : "Explore preview"}
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+          <p className={styles.bookMeta}>
+            The cards below show the intended Bookworm flow: library, book workspace, transcript memory, and saved
+            insights. Real uploaded books will replace this preview automatically.
+          </p>
+        </section>
+      ) : null}
 
       <section className={styles.readingDeskGrid}>
         <article className={styles.currentBookCard}>

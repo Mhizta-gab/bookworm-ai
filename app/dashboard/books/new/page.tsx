@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { AudioLines, ArrowLeft, ArrowRight, FileText, Mic, UploadCloud } from "lucide-react";
+import { useMemo, useState } from "react";
+import { AudioLines, ArrowLeft, ArrowRight, ImagePlus, Mic, UploadCloud } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import styles from "@/components/dashboard/dashboard.module.css";
 import { uploadChecklist } from "@/components/dashboard/mock-data";
-import { VOICE_PERSONAS } from "@/lib/constants";
+import { MAX_COVER_SIZE_MB, MAX_PDF_SIZE_MB, type PersonaId, VOICE_PERSONAS } from "@/lib/constants";
+import { createBook, saveBookSegments } from "@/lib/actions/book.actions";
+import { createPdfCoverFile, parsePDF, splitIntoSegments } from "@/lib/utils";
 
 const steps = [
   { id: "file", label: "Book file", note: "Start with the PDF" },
@@ -14,18 +18,183 @@ const steps = [
   { id: "review", label: "Review", note: "Confirm the setup" },
 ] as const;
 
+type UploadResult = {
+  url: string;
+  publicId: string;
+  bytes: number;
+};
+
+async function uploadMedia(file: File, kind: "cover" | "pdf"): Promise<UploadResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("kind", kind);
+
+  const response = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? "Upload failed.");
+  }
+
+  return payload as UploadResult;
+}
+
 export default function NewBookPage() {
+  const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
-  const activePersona = VOICE_PERSONAS[0];
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [keepPdf, setKeepPdf] = useState(false);
+  const [title, setTitle] = useState("");
+  const [author, setAuthor] = useState("");
+  const [persona, setPersona] = useState<PersonaId>(VOICE_PERSONAS[0].id);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusText, setStatusText] = useState("");
+
+  const activePersona = useMemo(
+    () => VOICE_PERSONAS.find((item) => item.id === persona) ?? VOICE_PERSONAS[0],
+    [persona]
+  );
+
   const isFirstStep = stepIndex === 0;
   const isLastStep = stepIndex === steps.length - 1;
+
+  const canContinue =
+    stepIndex === 0
+      ? !!pdfFile
+      : stepIndex === 1
+        ? title.trim().length > 0 && author.trim().length > 0
+        : true;
+
+  function handlePdfChange(file: File | null) {
+    if (!file) return setPdfFile(null);
+
+    if (file.type !== "application/pdf") {
+      toast.error("Please upload a PDF file.");
+      return;
+    }
+
+    if (file.size > MAX_PDF_SIZE_MB * 1024 * 1024) {
+      toast.error(`PDF must be ${MAX_PDF_SIZE_MB}MB or smaller.`);
+      return;
+    }
+
+    setPdfFile(file);
+    if (!title.trim()) {
+      setTitle(file.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " "));
+    }
+  }
+
+  function handleCoverChange(file: File | null) {
+    if (!file) return setCoverFile(null);
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Cover must be JPG, PNG, or WEBP.");
+      return;
+    }
+
+    if (file.size > MAX_COVER_SIZE_MB * 1024 * 1024) {
+      toast.error(`Cover must be ${MAX_COVER_SIZE_MB}MB or smaller.`);
+      return;
+    }
+
+    setCoverFile(file);
+  }
+
+  async function submitBook() {
+    if (!pdfFile || !title.trim() || !author.trim()) {
+      toast.error("Add the PDF, title, and author before creating the book.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      setStatusText("Extracting readable text from the PDF...");
+      const pages = await parsePDF(pdfFile);
+      const segments = splitIntoSegments(pages);
+
+      if (!segments.length) {
+        throw new Error("No readable text was found in this PDF.");
+      }
+
+      let coverUpload: UploadResult | null = null;
+      let pdfUpload: UploadResult | null = null;
+
+      setStatusText(coverFile ? "Uploading cover image to Cloudinary..." : "Generating cover from the first PDF page...");
+      const coverToUpload = coverFile ?? (await createPdfCoverFile(pdfFile));
+      setStatusText("Uploading cover image to Cloudinary...");
+      coverUpload = await uploadMedia(coverToUpload, "cover");
+
+      if (keepPdf) {
+        setStatusText("Uploading original PDF to Cloudinary...");
+        pdfUpload = await uploadMedia(pdfFile, "pdf");
+      }
+
+      setStatusText("Saving book metadata...");
+      const bookResult = await createBook({
+        title,
+        author,
+        persona,
+        coverUrl: coverUpload?.url,
+        coverBlobKey: coverUpload?.publicId,
+        fileUrl: pdfUpload?.url,
+        fileBlobKey: pdfUpload?.publicId,
+        fileSize: pdfFile.size,
+      });
+
+      if (!bookResult.success || !bookResult.data) {
+        throw new Error(bookResult.error ?? "Failed to create book.");
+      }
+
+      if (bookResult.alreadyExists) {
+        toast.info("That book already exists. I updated any missing media and opened the existing workspace.");
+        router.push(`/dashboard/books/${bookResult.data.slug}`);
+        return;
+      }
+
+      setStatusText("Saving searchable book segments...");
+      const segmentResult = await saveBookSegments(bookResult.data._id, segments);
+
+      if (!segmentResult.success) {
+        throw new Error(segmentResult.error ?? "Failed to save book segments.");
+      }
+
+      toast.success("Book created.");
+      router.push(`/dashboard/books/${bookResult.data.slug}`);
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : "Failed to create book.");
+    } finally {
+      setIsSubmitting(false);
+      setStatusText("");
+    }
+  }
+
+  function continueFlow() {
+    if (!canContinue) {
+      toast.error(stepIndex === 0 ? "Upload a PDF to continue." : "Add the title and author to continue.");
+      return;
+    }
+
+    if (isLastStep) {
+      void submitBook();
+      return;
+    }
+
+    setStepIndex((current) => Math.min(steps.length - 1, current + 1));
+  }
 
   return (
     <>
       <PageHeader
         eyebrow="Upload"
         title="Add a book without the clutter"
-        description="This flow stays narrow on purpose. You only see one decision at a time, so adding a new book feels calm instead of administrative."
+        description="The app extracts searchable text into MongoDB, stores the cover in Cloudinary, and only keeps the original PDF if you choose to preserve it."
       />
 
       <section className={styles.uploadWizardLayout}>
@@ -46,6 +215,7 @@ export default function NewBookPage() {
                   type="button"
                   className={`${styles.uploadStepItem} ${state}`}
                   onClick={() => setStepIndex(index)}
+                  disabled={isSubmitting}
                 >
                   <span className={styles.uploadStepNumber}>0{index + 1}</span>
                   <span>
@@ -58,9 +228,9 @@ export default function NewBookPage() {
           </div>
 
           <div className={styles.uploadChecklistCard}>
-            <p className={styles.panelLabel}>What happens next</p>
+            <p className={styles.panelLabel}>Storage plan</p>
             <div className={styles.stack}>
-              {uploadChecklist.slice(0, 3).map((step) => (
+              {uploadChecklist.map((step) => (
                 <div key={step} className={styles.uploadMiniRow}>
                   <span className={styles.uploadMiniDot} />
                   <span>{step}</span>
@@ -88,25 +258,49 @@ export default function NewBookPage() {
           <div className={styles.uploadModalBody}>
             {stepIndex === 0 ? (
               <div className={styles.uploadStepPanel}>
-                <div className={styles.uploadDropzone}>
+                <label className={styles.uploadDropzone}>
+                  <input
+                    className={styles.fileInput}
+                    type="file"
+                    accept="application/pdf"
+                    disabled={isSubmitting}
+                    onChange={(event) => handlePdfChange(event.target.files?.[0] ?? null)}
+                  />
                   <div className={styles.stack}>
                     <div className={styles.smallIconWrap}>
                       <UploadCloud size={18} />
                     </div>
-                    <strong>Drop your PDF here</strong>
-                    <p className={styles.bookMeta}>Supports up to 50MB. We will parse the text, chapters, and searchable passages.</p>
+                    <strong>{pdfFile ? pdfFile.name : "Choose your PDF"}</strong>
+                    <p className={styles.bookMeta}>Required. The readable text will be extracted and saved as searchable MongoDB segments.</p>
                   </div>
-                </div>
+                </label>
 
-                <div className={styles.uploadHintCard}>
-                  <div className={styles.uploadHintIcon}>
-                    <FileText size={16} />
+                <label className={styles.uploadDropzone}>
+                  <input
+                    className={styles.fileInput}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    disabled={isSubmitting}
+                    onChange={(event) => handleCoverChange(event.target.files?.[0] ?? null)}
+                  />
+                  <div className={styles.stack}>
+                    <div className={styles.smallIconWrap}>
+                      <ImagePlus size={18} />
+                    </div>
+                    <strong>{coverFile ? coverFile.name : "Add cover image"}</strong>
+                    <p className={styles.bookMeta}>Optional. Covers are uploaded to Cloudinary and referenced from MongoDB.</p>
                   </div>
-                  <div>
-                    <strong>Keep this step simple</strong>
-                    <p className={styles.bookMeta}>Only the main PDF is required right now. Cover art and other polish can come later.</p>
-                  </div>
-                </div>
+                </label>
+
+                <label className={styles.checkboxRow}>
+                  <input
+                    type="checkbox"
+                    checked={keepPdf}
+                    disabled={isSubmitting}
+                    onChange={(event) => setKeepPdf(event.target.checked)}
+                  />
+                  <span>Also keep the original PDF in Cloudinary</span>
+                </label>
               </div>
             ) : null}
 
@@ -115,18 +309,11 @@ export default function NewBookPage() {
                 <div className={styles.uploadFields}>
                   <label className={styles.fieldGroup}>
                     <span className={styles.fieldLabel}>Book title</span>
-                    <input className={styles.fieldInput} defaultValue="Atomic Habits" />
+                    <input className={styles.fieldInput} value={title} disabled={isSubmitting} onChange={(event) => setTitle(event.target.value)} />
                   </label>
                   <label className={styles.fieldGroup}>
                     <span className={styles.fieldLabel}>Author</span>
-                    <input className={styles.fieldInput} defaultValue="James Clear" />
-                  </label>
-                  <label className={styles.fieldGroup}>
-                    <span className={styles.fieldLabel}>Short description</span>
-                    <textarea
-                      className={styles.fieldTextarea}
-                      defaultValue="A practical book on behavior change, identity, and building systems that last."
-                    />
+                    <input className={styles.fieldInput} value={author} disabled={isSubmitting} onChange={(event) => setAuthor(event.target.value)} />
                   </label>
                 </div>
 
@@ -136,7 +323,7 @@ export default function NewBookPage() {
                   </div>
                   <div>
                     <strong>Why these details matter</strong>
-                    <p className={styles.bookMeta}>This context improves summaries, recommendations, and the way the voice assistant introduces the book.</p>
+                    <p className={styles.bookMeta}>This context improves summaries, search labels, and the way the assistant introduces the book.</p>
                   </div>
                 </div>
               </div>
@@ -145,36 +332,28 @@ export default function NewBookPage() {
             {stepIndex === 2 ? (
               <div className={styles.uploadStepPanel}>
                 <div className={styles.personaGrid}>
-                  {VOICE_PERSONAS.slice(0, 4).map((persona, index) => (
+                  {VOICE_PERSONAS.map((voice) => (
                     <button
-                      key={persona.id}
+                      key={voice.id}
                       type="button"
-                      className={`${styles.personaCard} ${index === 0 ? styles.personaCardActive : ""}`}
+                      className={`${styles.personaCard} ${voice.id === persona ? styles.personaCardActive : ""}`}
+                      onClick={() => setPersona(voice.id)}
+                      disabled={isSubmitting}
                     >
                       <div className={styles.personaCardTop}>
                         <div>
-                          <p className={styles.personaName}>{persona.name}</p>
+                          <p className={styles.personaName}>{voice.name}</p>
                           <p className={styles.bookMeta}>
-                            {persona.gender} • {persona.character}
+                            {voice.gender} - {voice.character}
                           </p>
                         </div>
                         <span className={styles.smallIconWrap}>
                           <Mic size={15} />
                         </span>
                       </div>
-                      <p className={styles.bookMeta}>Best for {persona.bestFor.toLowerCase()}.</p>
+                      <p className={styles.bookMeta}>Best for {voice.bestFor.toLowerCase()}.</p>
                     </button>
                   ))}
-                </div>
-
-                <div className={styles.uploadHintCard}>
-                  <div className={styles.uploadHintIcon}>
-                    <Mic size={16} />
-                  </div>
-                  <div>
-                    <strong>Start with one strong default</strong>
-                    <p className={styles.bookMeta}>Readers can always change the voice later. What matters here is getting the first session live quickly.</p>
-                  </div>
                 </div>
               </div>
             ) : null}
@@ -184,32 +363,32 @@ export default function NewBookPage() {
                 <div className={styles.reviewGrid}>
                   <div className={styles.reviewCard}>
                     <p className={styles.panelLabel}>File</p>
-                    <strong>atomic-habits.pdf</strong>
-                    <p className={styles.bookMeta}>Primary source ready for parsing and indexing</p>
+                    <strong>{pdfFile?.name ?? "No PDF selected"}</strong>
+                    <p className={styles.bookMeta}>{keepPdf ? "PDF will be retained in Cloudinary" : "PDF will be parsed, then only text segments are retained"}</p>
                   </div>
                   <div className={styles.reviewCard}>
                     <p className={styles.panelLabel}>Book details</p>
-                    <strong>Atomic Habits</strong>
-                    <p className={styles.bookMeta}>James Clear • practical habits and behavior change</p>
+                    <strong>{title || "Untitled"}</strong>
+                    <p className={styles.bookMeta}>{author || "Unknown author"}</p>
                   </div>
                   <div className={styles.reviewCard}>
                     <p className={styles.panelLabel}>Voice</p>
                     <strong>{activePersona.name}</strong>
                     <p className={styles.bookMeta}>Prepared for grounded answers and chapter-level recall</p>
                   </div>
-                </div>
-
-                <div className={styles.uploadSummaryCard}>
-                  <p className={styles.panelLabel}>After you confirm</p>
-                  <div className={styles.stack}>
-                    {uploadChecklist.map((step) => (
-                      <div key={step} className={styles.uploadMiniRow}>
-                        <span className={styles.uploadMiniDot} />
-                        <span>{step}</span>
-                      </div>
-                    ))}
+                  <div className={styles.reviewCard}>
+                    <p className={styles.panelLabel}>Cover</p>
+                    <strong>{coverFile ? "Cloudinary upload" : "Auto-generated cover"}</strong>
+                    <p className={styles.bookMeta}>{coverFile?.name ?? "First PDF page will be saved as the cover"}</p>
                   </div>
                 </div>
+
+                {statusText ? (
+                  <div className={styles.uploadSummaryCard}>
+                    <p className={styles.panelLabel}>Working</p>
+                    <strong>{statusText}</strong>
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -219,18 +398,14 @@ export default function NewBookPage() {
               type="button"
               className={styles.secondaryButton}
               onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
-              disabled={isFirstStep}
+              disabled={isFirstStep || isSubmitting}
             >
               <ArrowLeft size={16} />
               Back
             </button>
 
-            <button
-              type="button"
-              className={styles.primaryButton}
-              onClick={() => setStepIndex((current) => Math.min(steps.length - 1, current + 1))}
-            >
-              {isLastStep ? "Create book" : "Continue"}
+            <button type="button" className={styles.primaryButton} onClick={continueFlow} disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : isLastStep ? "Create book" : "Continue"}
               {!isLastStep ? <ArrowRight size={16} /> : null}
             </button>
           </div>

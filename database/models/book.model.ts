@@ -6,7 +6,7 @@ export interface IBook extends Document {
   author: string;
   slug: string;
   persona: string; // ElevenLabs voice ID
-  fileUrl: string;
+  fileUrl?: string;
   fileBlobKey?: string;
   coverUrl: string;
   coverBlobKey?: string;
@@ -23,7 +23,7 @@ const BookSchema = new Schema<IBook>(
     author: { type: String, required: true },
     slug: { type: String, required: true, unique: true, lowercase: true },
     persona: { type: String, required: true },
-    fileUrl: { type: String, required: true },
+    fileUrl: { type: String },
     fileBlobKey: { type: String },
     coverUrl: { type: String, required: true },
     coverBlobKey: { type: String },

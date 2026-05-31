@@ -26,7 +26,7 @@ export interface IBook {
   author: string;
   slug: string;
   persona: string; // ElevenLabs voice ID
-  fileUrl: string;
+  fileUrl?: string;
   coverUrl: string;
   fileSize: number;
   totalSegments: number;

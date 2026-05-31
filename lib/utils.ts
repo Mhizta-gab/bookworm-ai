@@ -1,14 +1,89 @@
 import { SEGMENT_WORD_LIMIT } from "@/lib/constants";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-// parsePDF — extracts text content from a PDF file using pdfjs-dist
-// Returns array of page texts
 export async function parsePDF(file: File): Promise<string[]> {
-  // TODO: Implement pdfjs-dist PDF text extraction
-  // Must run client-side only (pdfjs-dist is browser-based)
-  return [];
+  if (typeof window === "undefined") {
+    throw new Error("PDF parsing must run in the browser.");
+  }
+
+  const pdfjsLib = await import("pdfjs-dist");
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.min.mjs",
+    import.meta.url
+  ).toString();
+
+  const arrayBuffer = await file.arrayBuffer();
+  const document = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pages: string[] = [];
+
+  try {
+    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
+      const page = await document.getPage(pageNumber);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .filter((item) => "str" in item)
+        .map((item) => (item as { str: string }).str)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (pageText) {
+        pages.push(pageText);
+      }
+    }
+  } finally {
+    await document.destroy();
+  }
+
+  return pages;
 }
 
-// splitIntoSegments — splits raw text into ~500-word chunks
+export async function createPdfCoverFile(file: File): Promise<File> {
+  if (typeof window === "undefined") {
+    throw new Error("PDF cover generation must run in the browser.");
+  }
+
+  const pdfjsLib = await import("pdfjs-dist");
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.min.mjs",
+    import.meta.url
+  ).toString();
+
+  const arrayBuffer = await file.arrayBuffer();
+  const document = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  try {
+    const firstPage = await document.getPage(1);
+    const viewport = firstPage.getViewport({ scale: 1.8 });
+    const canvas = window.document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      throw new Error("Could not create a canvas for the PDF cover.");
+    }
+
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await firstPage.render({ canvas, canvasContext: context, viewport }).promise;
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((value) => {
+        if (value) resolve(value);
+        else reject(new Error("Could not export PDF cover image."));
+      }, "image/png");
+    });
+
+    const baseName = file.name.replace(/\.[^/.]+$/, "") || "book-cover";
+    return new File([blob], `${baseName}-cover.png`, { type: "image/png" });
+  } finally {
+    await document.destroy();
+  }
+}
+
 export function splitIntoSegments(pages: string[]): string[] {
   const fullText = pages.join(" ");
   const words = fullText.split(/\s+/).filter(Boolean);
@@ -21,7 +96,6 @@ export function splitIntoSegments(pages: string[]): string[] {
   return segments;
 }
 
-// generateSlug — creates a URL-safe slug from a book title
 export function generateSlug(title: string, author: string): string {
   const base = `${title} ${author}`
     .toLowerCase()
@@ -30,20 +104,14 @@ export function generateSlug(title: string, author: string): string {
     .replace(/-+/g, "-")
     .trim();
 
-  // Append a short random suffix to ensure uniqueness
   const suffix = Math.random().toString(36).substring(2, 7);
   return `${base}-${suffix}`;
 }
-
-// cn — utility for merging Tailwind class names
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// getBillingPeriodStart — returns first day of current month (for Vapi usage tracking)
 export function getBillingPeriodStart(): Date {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), 1);

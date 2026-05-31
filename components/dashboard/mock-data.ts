@@ -15,6 +15,11 @@ export type DashboardBook = {
   updatedLabel: string;
   updateSummary: string;
   accent: string;
+  coverUrl?: string;
+  fileUrl?: string;
+  totalSegments?: number;
+  fileSize?: number;
+  isUploaded?: boolean;
 };
 
 export const dashboardBooks: DashboardBook[] = [

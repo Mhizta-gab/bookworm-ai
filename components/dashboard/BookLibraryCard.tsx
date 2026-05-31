@@ -18,9 +18,16 @@ export function BookLibraryCard({ book }: BookLibraryCardProps) {
 
         <div className={styles.libraryCardBody}>
           <div className={styles.libraryCardCover} style={{ background: book.accent }}>
-            <p className={styles.panelLabel}>{book.genre}</p>
-            <h2 className={styles.bookTitle}>{book.title}</h2>
-            <p className={styles.bookMeta}>{book.author}</p>
+            {book.coverUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={book.coverUrl} alt="" className={styles.libraryCoverImage} />
+            ) : (
+              <>
+                <p className={styles.panelLabel}>{book.genre}</p>
+                <h2 className={styles.bookTitle}>{book.title}</h2>
+                <p className={styles.bookMeta}>{book.author}</p>
+              </>
+            )}
           </div>
 
           <div className={styles.libraryCardContent}>

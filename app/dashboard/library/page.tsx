@@ -1,18 +1,36 @@
-import { BookOpen } from "lucide-react";
+import { BookOpen, Search } from "lucide-react";
+import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { BookLibraryCard } from "@/components/dashboard/BookLibraryCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { toDashboardBooks } from "@/components/dashboard/book-view-model";
 import styles from "@/components/dashboard/dashboard.module.css";
 import { dashboardBooks } from "@/components/dashboard/mock-data";
+import { getAllBooks } from "@/lib/actions/book.actions";
 
-export default function LibraryPage() {
+interface LibraryPageProps {
+  searchParams: Promise<{ query?: string }>;
+}
+
+export default async function LibraryPage({ searchParams }: LibraryPageProps) {
+  const { userId } = await auth();
+  const { query } = await searchParams;
+  const realBooks = userId
+    ? await getAllBooks({ query }).catch((error) => {
+        console.error("Failed to load library books:", error);
+        return [];
+      })
+    : [];
+  const books = realBooks.length ? toDashboardBooks(realBooks) : dashboardBooks;
+  const isDemoState = !realBooks.length;
+
   return (
     <>
       <section className={styles.libraryHero}>
         <PageHeader
           eyebrow="Library"
-          title="A shared view of every book"
-          description="Each card stays lean and live. When a book changes, the library reflects that state, and clicking the card opens the full interface for that book."
+          title="Every book has a workspace"
+          description="Search your uploaded titles, check processing state, and open the full interface for reading, questions, voice sessions, and saved memory."
           actions={
             <Link href="/dashboard/books/new" className={styles.primaryButton}>
               <BookOpen size={16} />
@@ -22,11 +40,39 @@ export default function LibraryPage() {
         />
       </section>
 
-      <section className={styles.libraryCardGrid}>
-        {dashboardBooks.map((book) => (
-          <BookLibraryCard key={book.id} book={book} />
-        ))}
+      <section className={styles.panel}>
+        <div className={styles.panelHeader}>
+          <form className={styles.search} action="/dashboard/library">
+            <Search size={16} />
+            <input
+              className={styles.searchInput}
+              name="query"
+              placeholder="Search title or author"
+              defaultValue={query ?? ""}
+            />
+          </form>
+          <span className={styles.statusPill}>{realBooks.length || books.length} books</span>
+        </div>
+        {isDemoState ? (
+          <p className={styles.bookMeta}>
+            {userId
+              ? "Your library is empty right now. The preview cards show the target flow until you upload a book."
+              : "You are viewing preview books. Sign in and upload a PDF to create your own library."}
+          </p>
+        ) : null}
       </section>
+
+      {books.length ? (
+        <section className={styles.libraryCardGrid}>
+          {books.map((book) => (
+            <BookLibraryCard key={book.id} book={book} />
+          ))}
+        </section>
+      ) : (
+        <section className={styles.panel}>
+          <p className={styles.bookMeta}>No books matched that search.</p>
+        </section>
+      )}
     </>
   );
 }

@@ -1,12 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { getBookBySlug } from "@/lib/actions/book.actions";
 
-// GET /api/books/[slug]
-// Returns a single book document with metadata.
 export async function GET(
-  req: NextRequest,
+  _req: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  // TODO: Fetch book by slug from MongoDB
-  return NextResponse.json({ book: null });
+  const book = await getBookBySlug(slug);
+
+  if (!book) {
+    return NextResponse.json({ book: null, error: "Book not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ book });
 }

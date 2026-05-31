@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAllBooks } from "@/lib/actions/book.actions";
 
-// GET /api/books
-// Returns paginated list of all books, sorted newest first.
 export async function GET(req: NextRequest) {
-  // TODO: Implement paginated book listing from MongoDB
-  return NextResponse.json({ books: [], total: 0 });
+  const query = req.nextUrl.searchParams.get("query") ?? undefined;
+  const books = await getAllBooks({ query });
+
+  return NextResponse.json({ books, total: books.length });
 }

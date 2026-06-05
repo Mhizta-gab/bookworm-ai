@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, ReactNode, useMemo, useState } from "react";
 import { Send, Sparkles } from "lucide-react";
 import styles from "./dashboard.module.css";
 
@@ -14,6 +14,85 @@ type BookChatPanelProps = {
   bookTitle: string;
   starterPrompt: string;
 };
+
+function renderInlineMarkdown(text: string) {
+  return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>;
+    }
+
+    if (part.startsWith("*") && part.endsWith("*")) {
+      return <em key={`${part}-${index}`}>{part.slice(1, -1)}</em>;
+    }
+
+    return part;
+  });
+}
+
+function normalizeAssistantText(content: string) {
+  return content
+    .replace(/\r\n/g, "\n")
+    .replace(/\s+(?=\d+\.\s+)/g, "\n")
+    .replace(/\s+(?=-\s+)/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function renderAssistantMessage(content: string) {
+  const lines = normalizeAssistantText(content)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const blocks: ReactNode[] = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const orderedItems: string[] = [];
+    const bulletItems: string[] = [];
+
+    while (index < lines.length) {
+      const match = lines[index].match(/^\d+\.\s+(.+)$/);
+      if (!match) break;
+      orderedItems.push(match[1]);
+      index += 1;
+    }
+
+    if (orderedItems.length) {
+      blocks.push(
+        <ol key={`ordered-${index}`}>
+          {orderedItems.map((item) => (
+            <li key={item}>{renderInlineMarkdown(item)}</li>
+          ))}
+        </ol>
+      );
+      continue;
+    }
+
+    while (index < lines.length) {
+      const match = lines[index].match(/^-\s+(.+)$/);
+      if (!match) break;
+      bulletItems.push(match[1]);
+      index += 1;
+    }
+
+    if (bulletItems.length) {
+      blocks.push(
+        <ul key={`bullet-${index}`}>
+          {bulletItems.map((item) => (
+            <li key={item}>{renderInlineMarkdown(item)}</li>
+          ))}
+        </ul>
+      );
+      continue;
+    }
+
+    blocks.push(<p key={`paragraph-${index}`}>{renderInlineMarkdown(lines[index])}</p>);
+    index += 1;
+  }
+
+  return <div className={styles.chatFormattedMessage}>{blocks}</div>;
+}
 
 export function BookChatPanel({ bookId, bookTitle, starterPrompt }: BookChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -78,7 +157,7 @@ export function BookChatPanel({ bookId, bookTitle, starterPrompt }: BookChatPane
         </div>
         <span className={styles.statusPill}>
           <Sparkles size={15} />
-          OpenAI
+          Gemini
         </span>
       </div>
 
@@ -91,7 +170,7 @@ export function BookChatPanel({ bookId, bookTitle, starterPrompt }: BookChatPane
             >
               <div className={styles.transcriptBubble}>
                 <div className={styles.transcriptRole}>{message.role === "assistant" ? "Bookworm" : "You"}</div>
-                <div>{message.content}</div>
+                {message.role === "assistant" ? renderAssistantMessage(message.content) : <div>{message.content}</div>}
               </div>
             </div>
           ))}

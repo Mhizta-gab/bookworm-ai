@@ -84,13 +84,31 @@ export async function createPdfCoverFile(file: File): Promise<File> {
   }
 }
 
-export function splitIntoSegments(pages: string[]): string[] {
-  const fullText = pages.join(" ");
-  const words = fullText.split(/\s+/).filter(Boolean);
+export function splitIntoSegments(
+  pages: string[],
+  segmentSize: number = SEGMENT_WORD_LIMIT,
+  overlapSize: number = 50
+): string[] {
+  const fullText = pages.join("\n");
+  const words = fullText.split(/\s+/).filter((word) => word.length > 0);
   const segments: string[] = [];
 
-  for (let i = 0; i < words.length; i += SEGMENT_WORD_LIMIT) {
-    segments.push(words.slice(i, i + SEGMENT_WORD_LIMIT).join(" "));
+  if (segmentSize <= 0) {
+    throw new Error("segmentSize must be greater than 0");
+  }
+  if (overlapSize < 0 || overlapSize >= segmentSize) {
+    throw new Error("overlapSize must be >= 0 and < segmentSize");
+  }
+
+  let startIndex = 0;
+
+  while (startIndex < words.length) {
+    const endIndex = Math.min(startIndex + segmentSize, words.length);
+    const segmentWords = words.slice(startIndex, endIndex);
+    segments.push(segmentWords.join(" "));
+
+    if (endIndex >= words.length) break;
+    startIndex = endIndex - overlapSize;
   }
 
   return segments;

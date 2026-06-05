@@ -805,6 +805,171 @@
   font-weight: 800;
 }
 
+.voiceControlSurface {
+  display: grid;
+  gap: 18px;
+}
+
+.voiceHero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  padding: 16px;
+  border: 2px solid #181717;
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 206, 67, 0.32), rgba(130, 147, 255, 0.2)),
+    #fff8ef;
+}
+
+.voiceOrbWrap {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+}
+
+.voicePulseRing {
+  position: absolute;
+  inset: 4px;
+  border: 2px solid #6d67f0;
+  border-radius: 50%;
+  animation: voicePulse 1.45s ease-out infinite;
+}
+
+.voiceMicButton {
+  position: relative;
+  z-index: 1;
+  width: 74px;
+  height: 74px;
+  border: 2px solid #181717;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #171717;
+  color: #ffffff;
+  box-shadow: 4px 4px 0 #181717;
+  cursor: pointer;
+  transition: transform 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.voiceMicButton:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 6px 6px 0 #181717;
+}
+
+.voiceMicButton:disabled {
+  cursor: wait;
+  opacity: 0.78;
+}
+
+.voiceMicButtonActive {
+  background: #6d67f0;
+}
+
+.voiceHeroText {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.voiceTitle {
+  margin: 0;
+  font-size: 1.45rem;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 850;
+}
+
+.voiceStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.voiceStats > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 12px;
+  border: 2px solid #181717;
+  border-radius: 12px;
+  background: #fffdfa;
+  box-shadow: 2px 2px 0 rgba(24, 23, 23, 0.18);
+}
+
+.voiceStats strong {
+  line-height: 1;
+}
+
+.voiceTranscript {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-height: 260px;
+  max-height: 430px;
+  overflow-y: auto;
+  padding: 4px 4px 4px 0;
+}
+
+.transcriptEmpty {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 220px;
+  padding: 24px;
+  text-align: center;
+  border: 2px dashed rgba(24, 23, 23, 0.3);
+  border-radius: 14px;
+  background: #fff8ef;
+}
+
+.transcriptLiveBubble {
+  background: #fffbeb;
+}
+
+.liveCursor {
+  display: inline-block;
+  width: 8px;
+  height: 1.1em;
+  margin-left: 4px;
+  vertical-align: -0.18em;
+  background: #181717;
+  animation: cursorBlink 900ms steps(2, jump-none) infinite;
+}
+
+@keyframes voicePulse {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.88);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+
+@keyframes cursorBlink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voicePulseRing,
+  .liveCursor {
+    animation: none;
+  }
+}
+
 .composerBox {
   min-height: 104px;
   border-radius: 12px;
@@ -1159,6 +1324,15 @@
 
   .chatComposer {
     grid-template-columns: 1fr;
+  }
+
+  .voiceHero,
+  .voiceStats {
+    grid-template-columns: 1fr;
+  }
+
+  .voiceOrbWrap {
+    justify-self: center;
   }
 
   .navActions .primaryButton,

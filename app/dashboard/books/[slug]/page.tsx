@@ -1,6 +1,7 @@
 import { AudioLines, Bookmark, Highlighter, MessageSquare, PlayCircle, Quote, TimerReset } from "lucide-react";
 import Link from "next/link";
 import { BookChatPanel } from "@/components/dashboard/BookChatPanel";
+import VapiControls from "@/components/VapiControls";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { toDashboardBook } from "@/components/dashboard/book-view-model";
 import styles from "@/components/dashboard/dashboard.module.css";
@@ -45,10 +46,10 @@ export default async function BookPage({ params }: BookPageProps) {
               <Bookmark size={16} />
               Save note
             </button>
-            <button type="button" className={styles.primaryButton}>
+            <Link href="#voice-workspace" className={styles.primaryButton}>
               <PlayCircle size={16} />
-              Start voice session
-            </button>
+              Voice workspace
+            </Link>
           </>
         }
       />
@@ -106,7 +107,7 @@ export default async function BookPage({ params }: BookPageProps) {
           </div>
         </article>
 
-        <article className={styles.panel}>
+        <article className={styles.panel} id="voice-workspace">
           <div className={styles.panelHeader}>
             <div>
               <p className={styles.panelLabel}>Session controls</p>
@@ -117,45 +118,49 @@ export default async function BookPage({ params }: BookPageProps) {
               {book.status === "Ready" ? "Ready" : "Preparing"}
             </span>
           </div>
-          <div className={styles.stack}>
-            <div className={styles.statRow}>
-              <div className={styles.smallIconWrap}>
-                <MessageSquare size={15} />
+          {realBook ? (
+            <VapiControls bookId={realBook._id} bookTitle={realBook.title} author={realBook.author} voiceId={realBook.persona} />
+          ) : (
+            <div className={styles.stack}>
+              <div className={styles.statRow}>
+                <div className={styles.smallIconWrap}>
+                  <MessageSquare size={15} />
+                </div>
+                <div>
+                  <strong>Suggested first prompt</strong>
+                  <p className={styles.bookMeta}>{book.lastPrompt}</p>
+                </div>
               </div>
-              <div>
-                <strong>Suggested first prompt</strong>
-                <p className={styles.bookMeta}>{book.lastPrompt}</p>
+              <div className={styles.statRow}>
+                <div className={styles.smallIconWrap}>
+                  <Highlighter size={15} />
+                </div>
+                <div>
+                  <strong>{book.isUploaded ? "Indexed passages" : "Highlights saved"}</strong>
+                  <p className={styles.bookMeta}>
+                    {book.isUploaded
+                      ? `${book.totalSegments?.toLocaleString() ?? 0} chunks available for grounded retrieval`
+                      : `${book.highlights} key moments clipped from this title`}
+                  </p>
+                </div>
+              </div>
+              <div className={styles.statRow}>
+                <div className={styles.smallIconWrap}>
+                  <TimerReset size={15} />
+                </div>
+                <div>
+                  <strong>{book.isUploaded ? "Storage mode" : "Session loop"}</strong>
+                  <p className={styles.bookMeta}>
+                    {book.isUploaded
+                      ? book.fileUrl
+                        ? "Cover and PDF are in Cloudinary; metadata and text are in MongoDB."
+                        : "Cover is in Cloudinary; metadata and text are in MongoDB."
+                      : "Listen, ask, save, and revisit without losing the earlier thread."}
+                  </p>
+                </div>
               </div>
             </div>
-            <div className={styles.statRow}>
-              <div className={styles.smallIconWrap}>
-                <Highlighter size={15} />
-              </div>
-              <div>
-                <strong>{book.isUploaded ? "Indexed passages" : "Highlights saved"}</strong>
-                <p className={styles.bookMeta}>
-                  {book.isUploaded
-                    ? `${book.totalSegments?.toLocaleString() ?? 0} chunks available for grounded retrieval`
-                    : `${book.highlights} key moments clipped from this title`}
-                </p>
-              </div>
-            </div>
-            <div className={styles.statRow}>
-              <div className={styles.smallIconWrap}>
-                <TimerReset size={15} />
-              </div>
-              <div>
-                <strong>{book.isUploaded ? "Storage mode" : "Session loop"}</strong>
-                <p className={styles.bookMeta}>
-                  {book.isUploaded
-                    ? book.fileUrl
-                      ? "Cover and PDF are in Cloudinary; metadata and text are in MongoDB."
-                      : "Cover is in Cloudinary; metadata and text are in MongoDB."
-                    : "Listen, ask, save, and revisit without losing the earlier thread."}
-                </p>
-              </div>
-            </div>
-          </div>
+          )}
         </article>
       </section>
 

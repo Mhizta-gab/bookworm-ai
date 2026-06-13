@@ -39,4 +39,8 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   }
+  ,
+  "overrides": {
+    "@daily-co/daily-js": "^0.86.0"
+  }
 }

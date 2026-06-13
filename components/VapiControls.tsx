@@ -11,6 +11,7 @@ interface VapiControlsProps {
   bookTitle: string;
   author: string;
   voiceId?: string;
+  onSaveNote: (title: string, content: string) => void;
 }
 
 const statusText: Record<VapiSessionStatus, string> = {
@@ -30,7 +31,9 @@ function formatDuration(totalSeconds: number) {
   return `${minutes}:${seconds}`;
 }
 
-export default function VapiControls({ bookId, bookTitle, author, voiceId }: VapiControlsProps) {
+import { useState } from "react";
+
+export default function VapiControls({ bookId, bookTitle, author, voiceId, onSaveNote }: VapiControlsProps) {
   const {
     status,
     messages,
@@ -43,6 +46,8 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId }: Vap
   } = useVapi();
 
   const isConnecting = status === "connecting";
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
 
   async function handleToggle() {
     if (isActive) {
@@ -51,6 +56,40 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId }: Vap
     }
 
     await startSession({ bookId, bookTitle, author, voiceId });
+  }
+
+  async function handleSummarize() {
+    if (messages.length === 0 || isSummarizing) return;
+    setIsSummarizing(true);
+    try {
+      const response = await fetch("/api/chat/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcripts: messages }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to summarize.");
+      
+      setSummary(data.summary);
+      onSaveNote(`Voice Session Summary (${formatDuration(duration)})`, data.summary);
+      alert("Session summarized and saved to notes!");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to summarize session.");
+    } finally {
+      setIsSummarizing(false);
+    }
+  }
+
+  function handleExportSummary() {
+    if (!summary) return;
+    const blob = new Blob([summary], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${bookTitle}-summary.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -108,6 +147,28 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId }: Vap
           {isActive ? <MicOff size={16} /> : <Mic size={16} />}
           {isConnecting ? "Connecting..." : isActive ? "End session" : "Start voice session"}
         </button>
+        
+        {!isActive && messages.length > 0 && !summary && (
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={handleSummarize}
+            disabled={isSummarizing}
+          >
+            <Sparkles size={16} />
+            {isSummarizing ? "Summarizing..." : "Summarize Session"}
+          </button>
+        )}
+
+        {!isActive && summary && (
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={handleExportSummary}
+          >
+            Export Summary (.md)
+          </button>
+        )}
       </div>
 
       <Transcript messages={messages} currentMessage={currentMessage} currentUserMessage={currentUserMessage} />

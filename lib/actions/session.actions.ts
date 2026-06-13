@@ -35,7 +35,7 @@ export async function endVoiceSession(sessionId: string, durationSeconds = 0) {
   const result = await VoiceSession.findOneAndUpdate(
     { _id: sessionId, clerkId: userId },
     { endedAt: new Date(), durationSeconds },
-    { new: true }
+    { returnDocument: "after" }
   );
 
   if (!result) {

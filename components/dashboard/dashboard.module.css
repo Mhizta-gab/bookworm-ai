@@ -392,9 +392,9 @@
 .personaCard,
 .memoryRow,
 .composerBox {
-  border: 2px solid #181717;
+  border: 1px solid rgba(24, 23, 23, 0.08);
   background: #fffdfa;
-  box-shadow: 5px 5px 0 #181717;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
 }
 
 .panel,
@@ -601,8 +601,8 @@
 }
 
 .libraryCard:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 8px 8px 0 #181717;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 .libraryCardBody {
@@ -614,7 +614,7 @@
 
 .libraryCardCover,
 .bookCover {
-  border: 2px solid #181717;
+  border: 1px solid rgba(24, 23, 23, 0.06);
   border-radius: 14px;
   padding: 16px;
   color: #181717;
@@ -638,8 +638,8 @@
   height: 100%;
   object-fit: cover;
   border-radius: 10px;
-  border: 2px solid #181717;
-  box-shadow: 3px 3px 0 rgba(24, 23, 23, 0.26);
+  border: 1px solid rgba(24, 23, 23, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   background: #fffdfa;
 }
 
@@ -732,15 +732,41 @@
 .transcriptBubble {
   max-width: 88%;
   padding: 14px 16px;
-  border: 2px solid #181717;
+  border: 1px solid rgba(24, 23, 23, 0.12);
   border-radius: 12px;
   background: #fffdfa;
-  box-shadow: 3px 3px 0 #181717;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
   line-height: 1.55;
 }
 
 .transcriptAssistant .transcriptBubble {
   background: #fff8ef;
+}
+
+.chatFormattedMessage {
+  display: grid;
+  gap: 12px;
+}
+
+.chatFormattedMessage p,
+.chatFormattedMessage ol,
+.chatFormattedMessage ul {
+  margin: 0;
+}
+
+.chatFormattedMessage ol,
+.chatFormattedMessage ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 1.25rem;
+}
+
+.chatFormattedMessage li {
+  padding-left: 3px;
+}
+
+.chatFormattedMessage strong {
+  font-weight: 850;
 }
 
 .commentsComposer {
@@ -763,7 +789,7 @@
 
 .chatStarterButton {
   width: 100%;
-  border: 2px solid #181717;
+  border: 1px solid rgba(24, 23, 23, 0.12);
   border-radius: 12px;
   background: #fff8ef;
   color: #181717;
@@ -776,8 +802,8 @@
 }
 
 .chatStarterButton:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 #181717;
+  background: #fffdfa;
+  transform: translateY(-1px);
 }
 
 .chatComposer {
@@ -1339,4 +1365,41 @@
   .navActions .secondaryButton {
     width: auto;
   }
+}
+
+.studioTabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(24, 23, 23, 0.1);
+  padding-bottom: 16px;
+}
+
+.tabButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #686259;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.tabButton:hover {
+  background: rgba(24, 23, 23, 0.04);
+  color: #181717;
+}
+
+.tabButtonActive {
+  background: #fffdfa;
+  color: #181717;
+  border-color: rgba(24, 23, 23, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }

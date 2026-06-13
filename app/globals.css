@@ -19,3 +19,170 @@ textarea,
 select {
   font: inherit;
 }
+
+/* Custom Sonner Toast Styles */
+:root {
+  --sonner-toast-width: 360px;
+  --sonner-toast-padding: 12px 16px;
+}
+
+/* Main toast container */
+[data-sonner-toaster] {
+  z-index: 9999;
+}
+
+/* Toast items */
+[data-sonner-toast] {
+  font-family: "Instrument Sans", Arial, sans-serif;
+  border-radius: 4px;
+  border: 2px solid #171717;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.35);
+  background: #fffdfa;
+  color: #181717;
+  padding: 12px 16px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  gap: 10px;
+}
+
+/* Toast description */
+[data-sonner-toast] [data-description] {
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: #686259;
+  margin-top: 4px;
+}
+
+/* Success toast */
+[data-sonner-toast][data-type="success"] {
+  background: #fffdfa;
+  color: #181717;
+  border-color: #171717;
+}
+
+[data-sonner-toast][data-type="success"] [data-description] {
+  color: #5c554d;
+}
+
+/* Error toast */
+[data-sonner-toast][data-type="error"] {
+  background: #fffdfa;
+  color: #b42318;
+  border-color: #b42318;
+}
+
+[data-sonner-toast][data-type="error"] [data-description] {
+  color: #8a3824;
+}
+
+/* Warning toast */
+[data-sonner-toast][data-type="warning"] {
+  background: #fffdfa;
+  color: #d68422;
+  border-color: #d68422;
+}
+
+[data-sonner-toast][data-type="warning"] [data-description] {
+  color: #a86b1a;
+}
+
+/* Info toast */
+[data-sonner-toast][data-type="info"] {
+  background: #fffdfa;
+  color: #6d67f0;
+  border-color: #6d67f0;
+}
+
+[data-sonner-toast][data-type="info"] [data-description] {
+  color: #5a5599;
+}
+
+/* Loading toast */
+[data-sonner-toast][data-type="loading"] {
+  background: #fffdfa;
+  color: #181717;
+  border-color: #171717;
+}
+
+[data-sonner-toast][data-type="loading"] [data-description] {
+  color: #686259;
+}
+
+/* Close button */
+[data-sonner-toast] button[data-close-button] {
+  background: transparent;
+  border: none;
+  color: #181717;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 150ms ease;
+}
+
+[data-sonner-toast] button[data-close-button]:hover {
+  transform: scale(1.15);
+}
+
+/* Action button */
+[data-sonner-toast] button[data-action-button] {
+  background: #171717;
+  color: #ffffff;
+  border: 2px solid #171717;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+[data-sonner-toast] button[data-action-button]:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* Cancel button */
+[data-sonner-toast] button[data-cancel-button] {
+  background: #fffdfa;
+  color: #181717;
+  border: 2px solid #181717;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  box-shadow: 2px 2px 0 rgba(24, 23, 23, 0.18);
+}
+
+[data-sonner-toast] button[data-cancel-button]:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  :root {
+    --sonner-toast-width: calc(100vw - 24px);
+  }
+
+  [data-sonner-toast] {
+    border-radius: 4px;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+    padding: 10px 14px;
+    font-size: 0.88rem;
+  }
+
+  [data-sonner-toast] button[data-action-button],
+  [data-sonner-toast] button[data-cancel-button] {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.25);
+  }
+}

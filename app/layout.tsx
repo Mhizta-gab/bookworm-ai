@@ -33,11 +33,49 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <ClerkProvider>{children}</ClerkProvider>
         <Toaster
-          position="top-center"
+          position="bottom-right"
           richColors
           closeButton
           theme="light"
           pauseWhenPageIsHidden
+          toastOptions={{
+            classNames: {
+              toast: "sonner-toast",
+              description: "sonner-description",
+              actionButton: "sonner-action-button",
+              cancelButton: "sonner-cancel-button",
+              closeButton: "sonner-close-button",
+            },
+            style: {
+              fontSize: "0.92rem",
+              fontWeight: 700,
+              fontFamily: '"Instrument Sans", Arial, sans-serif',
+              borderRadius: "4px",
+              border: "2px solid #171717",
+              boxShadow: "3px 3px 0 rgba(0, 0, 0, 0.35)",
+              padding: "12px 16px",
+            },
+            successStyle: {
+              background: "#fffdfa",
+              color: "#181717",
+              borderColor: "#171717",
+            },
+            errorStyle: {
+              background: "#fffdfa",
+              color: "#b42318",
+              borderColor: "#b42318",
+            },
+            warningStyle: {
+              background: "#fffdfa",
+              color: "#d68422",
+              borderColor: "#d68422",
+            },
+            infoStyle: {
+              background: "#fffdfa",
+              color: "#6d67f0",
+              borderColor: "#6d67f0",
+            },
+          }}
         />
       </body>
     </html>

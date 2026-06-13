@@ -1,4 +1,5 @@
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "sonner";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -31,6 +32,13 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <ClerkProvider>{children}</ClerkProvider>
+        <Toaster
+          position="top-center"
+          richColors
+          closeButton
+          theme="light"
+          pauseWhenPageIsHidden
+        />
       </body>
     </html>
   );

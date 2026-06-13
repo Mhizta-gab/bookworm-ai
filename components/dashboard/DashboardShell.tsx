@@ -15,9 +15,9 @@ import { usePathname } from "next/navigation";
 import styles from "./dashboard.module.css";
 
 const navItems = [
-  { href: "/dashboard", label: "Overview", icon: ChartColumnIncreasing },
+  { href: "/dashboard", label: "Desk", icon: ChartColumnIncreasing },
   { href: "/dashboard/library", label: "Library", icon: Library },
-  { href: "/dashboard/books/new", label: "Upload", icon: Plus },
+  { href: "/dashboard/books/new", label: "Add", icon: Plus },
 ];
 
 export function DashboardShell({
@@ -41,7 +41,7 @@ export function DashboardShell({
                 </span>
                 <span className={styles.brandTextBlock}>
                   <span className={styles.brandTitle}>bookworm ai</span>
-                  <p className={styles.brandSubtitle}>Reading workspace</p>
+                  <p className={styles.brandSubtitle}>Your reading desk</p>
                 </span>
               </Link>
             </div>
@@ -85,7 +85,7 @@ export function DashboardShell({
                 </button>
                 <Link href="/dashboard/books/new" className={styles.primaryButton}>
                   <Plus size={16} />
-                  Create
+                  Add book
                 </Link>
                 <div className={styles.dashboardUserButton}>
                   <UserButton />
@@ -102,7 +102,7 @@ export function DashboardShell({
                 <div>
                   <p className={styles.topbarLabel}>Reading studio</p>
                   <p className={styles.topbarTitle}>
-                    {isSignedIn ? "Your library, memory, and live sessions" : "Sign in to keep your reading state"}
+                    {isSignedIn ? "Your books, notes, and reading conversations" : "Sign in to keep your books close"}
                   </p>
                 </div>
               </div>
@@ -110,7 +110,7 @@ export function DashboardShell({
               <div className={styles.topbarActions}>
                 <div className={styles.search}>
                   <Search size={16} />
-                  <span>Search books, highlights, sessions</span>
+                  <span>Search books, notes, and highlights</span>
                 </div>
               </div>
             </div>
@@ -118,6 +118,23 @@ export function DashboardShell({
             <div className={styles.page}>{children}</div>
           </div>
         </main>
+
+        <nav className={styles.mobileNav} aria-label="Dashboard navigation">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`${styles.mobileNavItem} ${active ? styles.mobileNavItemActive : ""}`}
+              >
+                <Icon size={19} strokeWidth={2.2} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </div>
   );

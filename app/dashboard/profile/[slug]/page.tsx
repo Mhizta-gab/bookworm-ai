@@ -88,7 +88,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 </div>
                 <div>
                   <strong>Voice-first learner</strong>
-                  <p className={styles.bookMeta}>Most sessions start with a chapter recap prompt</p>
+                  <p className={styles.bookMeta}>Most conversations start with a chapter recap</p>
                 </div>
               </div>
             </div>
@@ -134,11 +134,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       <article className={styles.panel}>
         <div className={styles.panelHeader}>
           <div>
-            <p className={styles.panelLabel}>Route</p>
+            <p className={styles.panelLabel}>Handle</p>
             <h3 className={styles.panelTitle}>Public reader handle</h3>
           </div>
         </div>
-        <p className={styles.bookMeta}>This profile is currently being rendered for <strong>{slug}</strong>.</p>
+        <p className={styles.bookMeta}>This public profile belongs to <strong>{slug}</strong>.</p>
       </article>
     </>
   );

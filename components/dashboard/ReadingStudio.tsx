@@ -27,7 +27,7 @@ export function ReadingStudio({ bookId, bookTitle, author, starterPrompt, voiceI
           onClick={() => setActiveTab("voice")}
         >
           <Mic size={16} />
-          Voice Session
+          Listen
         </button>
         <button
           type="button"
@@ -35,7 +35,7 @@ export function ReadingStudio({ bookId, bookTitle, author, starterPrompt, voiceI
           onClick={() => setActiveTab("text")}
         >
           <MessageSquare size={16} />
-          Text Chat
+          Ask
         </button>
       </div>
 

@@ -41,7 +41,7 @@ export function BookLibraryCard({ book }: BookLibraryCardProps) {
         </div>
 
         <div className={styles.libraryCardFooter}>
-          <span className={styles.libraryCardHint}>Open book interface</span>
+          <span className={styles.libraryCardHint}>Open book</span>
           <span className={styles.libraryCardArrow}>
             <ArrowUpRight size={16} />
           </span>

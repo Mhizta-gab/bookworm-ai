@@ -1,10 +1,10 @@
-import { AudioLines, Bookmark, Highlighter, MessageSquare, PlayCircle, Quote, TimerReset } from "lucide-react";
+import { Bookmark, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { ReadingWorkspace } from "@/components/dashboard/ReadingWorkspace";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { toDashboardBook } from "@/components/dashboard/book-view-model";
 import styles from "@/components/dashboard/dashboard.module.css";
-import { getBookBySlug as getMockBookBySlug, recommendations, transcriptPreview } from "@/components/dashboard/mock-data";
+import { getBookBySlug as getMockBookBySlug, recommendations } from "@/components/dashboard/mock-data";
 import { getBookBySlug } from "@/lib/actions/book.actions";
 
 interface BookPageProps {
@@ -20,14 +20,14 @@ const comments = [
   {
     name: "Sam",
     role: "Student",
-    text: "I use the transcript to pull revision prompts, then save the best ones as highlights for later.",
+    text: "I use the recap to pull revision prompts, then save the best ones as highlights for later.",
   },
 ];
 
 export default async function BookPage({ params }: BookPageProps) {
   const { slug } = await params;
   const realBook = await getBookBySlug(slug).catch((error) => {
-    console.error("Failed to load book workspace:", error);
+    console.error("Failed to load book:", error);
     return null;
   });
   const book = realBook ? toDashboardBook(realBook) : getMockBookBySlug(slug);
@@ -38,16 +38,16 @@ export default async function BookPage({ params }: BookPageProps) {
       <PageHeader
         eyebrow="Book detail"
         title={book.title}
-        description={`${book.author} - ${book.genre} - Voice persona ${book.persona}. Ask questions naturally, get grounded answers, and keep the best moments in your notes.`}
+        description={`${book.author} - ${book.genre} - ${book.persona} voice. Ask questions naturally, hear grounded answers, and keep the best moments in your notes.`}
         actions={
           <>
             <button type="button" className={styles.secondaryButton}>
               <Bookmark size={16} />
               Save note
             </button>
-            <Link href="#voice-workspace" className={styles.primaryButton}>
+            <Link href="#reading-studio" className={styles.primaryButton}>
               <PlayCircle size={16} />
-              Voice workspace
+              Start listening
             </Link>
           </>
         }
@@ -83,12 +83,15 @@ export default async function BookPage({ params }: BookPageProps) {
             <p className={styles.bookMeta}>{book.summary}</p>
             <div className={styles.bookCardFooter}>
               <div>
-                <strong>{book.totalSegments?.toLocaleString() ?? book.sessions} {book.isUploaded ? "segments" : "sessions"}</strong>
+                <strong>
+                  {book.totalSegments?.toLocaleString() ?? book.sessions}{" "}
+                  {book.isUploaded ? "passages ready" : "conversations"}
+                </strong>
                 <p className={styles.bookMeta}>
                   {book.isUploaded
                     ? book.fileUrl
-                      ? "Original PDF retained in Cloudinary"
-                      : "Original PDF not retained; searchable text is stored"
+                      ? "Original PDF saved with this book"
+                      : "Readable passages are ready for questions"
                     : `${book.minutes} minutes spoken with this book`}
                 </p>
               </div>
@@ -131,7 +134,7 @@ export default async function BookPage({ params }: BookPageProps) {
               <div key={title} className={styles.listRow}>
                 <div>
                   <strong>{title}</strong>
-                  <p className={styles.bookMeta}>Suggested from this session&apos;s themes</p>
+                  <p className={styles.bookMeta}>Suggested from your recent questions</p>
                 </div>
                 <Link href="/dashboard/library" className={styles.ghostButton}>
                   Open

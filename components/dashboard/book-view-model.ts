@@ -27,7 +27,7 @@ export function toDashboardBook(book: IBook, index = 0): DashboardBook {
   const isReady = book.totalSegments > 0;
   const status = isReady ? "Ready" : "Processing";
   const hasPdf = Boolean(book.fileUrl);
-  const segmentLabel = `${book.totalSegments.toLocaleString()} searchable ${book.totalSegments === 1 ? "passage" : "passages"}`;
+  const passageLabel = `${book.totalSegments.toLocaleString()} ${book.totalSegments === 1 ? "passage" : "passages"}`;
 
   return {
     id: book._id,
@@ -41,14 +41,14 @@ export function toDashboardBook(book: IBook, index = 0): DashboardBook {
     minutes: 0,
     highlights: 0,
     summary: isReady
-      ? `${segmentLabel} are ready for grounded conversations.`
-      : "This book has been added and is waiting for text extraction and indexing.",
+      ? `${passageLabel} are ready for questions, notes, and voice reading.`
+      : "This book has been added and Bookworm is still preparing it for questions.",
     progress: isReady ? 100 : 35,
     lastPrompt: `Give me a concise overview of ${book.title}, then suggest the first three questions I should ask.`,
     updatedLabel: formatUpdatedLabel(book.updatedAt),
     updateSummary: isReady
-      ? `${segmentLabel} indexed. ${hasPdf ? "Original PDF retained." : "Text-only storage."}`
-      : "Processing setup is underway. The workspace is prepared for the next indexing step.",
+      ? `${passageLabel} ready. ${hasPdf ? "The original PDF is saved with this book." : "The readable parts are ready for conversation."}`
+      : "Bookworm is preparing the book and will unlock the full conversation soon.",
     accent: accents[index % accents.length],
     coverUrl: book.coverUrl,
     fileUrl: book.fileUrl,

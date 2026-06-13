@@ -29,8 +29,8 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
       <section className={styles.libraryHero}>
         <PageHeader
           eyebrow="Library"
-          title="Every book has a workspace"
-          description="Search your uploaded titles, check processing state, and open the full interface for reading, questions, voice sessions, and saved memory."
+          title="Every book stays ready to talk"
+          description="Search your saved titles, pick up recent conversations, and keep notes and highlights close while you read."
           actions={
             <Link href="/dashboard/books/new" className={styles.primaryButton}>
               <BookOpen size={16} />
@@ -56,7 +56,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
         {isDemoState ? (
           <p className={styles.bookMeta}>
             {userId
-              ? "Your library is empty right now. The preview cards show the target flow until you upload a book."
+              ? "Your library is empty right now. The preview cards show what your reading shelf will feel like after your first upload."
               : "You are viewing preview books. Sign in and upload a PDF to create your own library."}
           </p>
         ) : null}

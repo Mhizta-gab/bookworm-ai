@@ -38,7 +38,7 @@ export const dashboardBooks: DashboardBook[] = [
     progress: 78,
     lastPrompt: "What is the difference between goals and systems in chapter 1?",
     updatedLabel: "Updated 12m ago",
-    updateSummary: "New transcript memory saved from your last session.",
+    updateSummary: "A new note from your last conversation is ready to revisit.",
     accent: "linear-gradient(135deg, #86a8ff 0%, #cdd8ff 100%)",
   },
   {
@@ -74,7 +74,7 @@ export const dashboardBooks: DashboardBook[] = [
     progress: 49,
     lastPrompt: "Explain cognitive ease like I am revising for an exam.",
     updatedLabel: "Updated 3h ago",
-    updateSummary: "Indexing is still refining chapter-level recall.",
+    updateSummary: "Bookworm is still getting this title ready for deeper chapter questions.",
     accent: "linear-gradient(135deg, #ff9478 0%, #ffd4c5 100%)",
   },
   {
@@ -92,7 +92,7 @@ export const dashboardBooks: DashboardBook[] = [
     progress: 18,
     lastPrompt: "Summarize the core stoic idea in book 2.",
     updatedLabel: "Updated just now",
-    updateSummary: "The PDF is still processing and will open fully once indexing finishes.",
+    updateSummary: "Bookworm is still preparing this PDF and will unlock the full conversation soon.",
     accent: "linear-gradient(135deg, #85d7b2 0%, #d9f5e8 100%)",
   },
 ];
@@ -107,14 +107,14 @@ export const dashboardStats = [
 export const activeSessions = [
   { title: "Atomic Habits", time: "14m", mode: "Voice recap", state: "Speaking" },
   { title: "Deep Work", time: "09m", mode: "Quick answer", state: "Listening" },
-  { title: "Meditations", time: "Syncing", mode: "PDF ingest", state: "Processing" },
+  { title: "Meditations", time: "Getting ready", mode: "Book setup", state: "Preparing" },
 ] as const;
 
 export const uploadChecklist = [
-  "Drop PDF or select from device",
-  "Choose cover image or auto-generate from page 1",
-  "Assign a voice persona",
-  "Index chapters, summaries, and searchable segments",
+  "Choose a PDF from your device",
+  "Add a cover or let Bookworm create one",
+  "Pick the reading voice you prefer",
+  "Make the book ready for questions and notes",
 ] as const;
 
 export const transcriptPreview = [

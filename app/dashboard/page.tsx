@@ -41,7 +41,7 @@ export default async function HomePage() {
             <div>
               <p className={styles.panelLabel}>{userId ? "Empty library" : "Preview mode"}</p>
               <h2 className={styles.panelTitle}>
-                {userId ? "Upload your first book to activate the workspace" : "Sign in to make this reading desk yours"}
+                {userId ? "Upload your first book to start reading with Bookworm" : "Sign in to make this reading desk yours"}
               </h2>
             </div>
             <Link href={userId ? "/dashboard/books/new" : "/dashboard/library"} className={styles.primaryButton}>
@@ -50,8 +50,8 @@ export default async function HomePage() {
             </Link>
           </div>
           <p className={styles.bookMeta}>
-            The cards below show the intended Bookworm flow: library, book workspace, transcript memory, and saved
-            insights. Real uploaded books will replace this preview automatically.
+            The cards below show how Bookworm keeps your books, conversations, and saved insights together. Your own
+            uploads will appear here as soon as you add them.
           </p>
         </section>
       ) : null}
@@ -74,7 +74,7 @@ export default async function HomePage() {
           <div className={styles.resumeMeta}>
             <span className={styles.tinyPill}>{currentBook.author}</span>
             <span className={styles.tinyPill}>{currentBook.genre}</span>
-            <span className={styles.tinyPill}>{currentBook.minutes}m listened</span>
+            <span className={styles.tinyPill}>{currentBook.minutes} min listened</span>
           </div>
 
           <div className={styles.currentBookActions}>

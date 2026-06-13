@@ -71,11 +71,11 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
       if (!response.ok) throw new Error(data.error || "Failed to summarize.");
       
       setSummary(data.summary);
-      onSaveNote(`Voice Session Summary (${formatDuration(duration)})`, data.summary);
-      alert("Session summarized and saved to notes!");
+      onSaveNote(`Listening recap (${formatDuration(duration)})`, data.summary);
+      alert("Recap saved to notes.");
     } catch (error) {
       console.error(error);
-      alert("Failed to summarize session.");
+      alert("Could not save a recap right now.");
     } finally {
       setIsSummarizing(false);
     }
@@ -102,7 +102,7 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
             className={`${styles.voiceMicButton} ${isActive ? styles.voiceMicButtonActive : ""}`}
             onClick={handleToggle}
             disabled={isConnecting}
-            aria-label={isActive ? "End voice session" : "Start voice session"}
+            aria-label={isActive ? "End listening" : "Start listening"}
           >
             {isConnecting ? <Radio size={30} /> : isActive ? <PhoneOff size={30} /> : <Mic size={30} />}
           </button>
@@ -113,11 +113,11 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
             <Sparkles size={15} />
             {statusText[status]}
           </span>
-          <h4 className={styles.voiceTitle}>{isActive ? "Live with the book" : "Start a grounded voice session"}</h4>
+          <h4 className={styles.voiceTitle}>{isActive ? "Live with the book" : "Start listening"}</h4>
           <p className={styles.bookMeta}>
             {isActive
-              ? "Ask naturally. The assistant will search the saved book passages when it needs evidence."
-              : `Talk with ${bookTitle} using the selected ElevenLabs voice persona.`}
+              ? "Ask naturally. Bookworm will use the book when it needs evidence."
+              : `Talk with ${bookTitle} using the reading voice you selected.`}
           </p>
         </div>
       </div>
@@ -128,12 +128,12 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
           <strong>{formatDuration(duration)}</strong>
         </div>
         <div>
-          <span className={styles.panelLabel}>Transcript</span>
+          <span className={styles.panelLabel}>Exchange</span>
           <strong>{messages.length} turns</strong>
         </div>
         <div>
           <span className={styles.panelLabel}>Mode</span>
-          <strong>RAG voice</strong>
+          <strong>Voice</strong>
         </div>
       </div>
 
@@ -145,7 +145,7 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
           disabled={isConnecting}
         >
           {isActive ? <MicOff size={16} /> : <Mic size={16} />}
-          {isConnecting ? "Connecting..." : isActive ? "End session" : "Start voice session"}
+          {isConnecting ? "Connecting..." : isActive ? "End listening" : "Start listening"}
         </button>
         
         {!isActive && messages.length > 0 && !summary && (
@@ -156,7 +156,7 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
             disabled={isSummarizing}
           >
             <Sparkles size={16} />
-            {isSummarizing ? "Summarizing..." : "Summarize Session"}
+            {isSummarizing ? "Saving recap..." : "Save recap"}
           </button>
         )}
 
@@ -166,7 +166,7 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
             className={styles.secondaryButton}
             onClick={handleExportSummary}
           >
-            Export Summary (.md)
+            Download recap
           </button>
         )}
       </div>

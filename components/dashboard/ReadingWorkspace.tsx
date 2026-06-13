@@ -57,14 +57,14 @@ export function ReadingWorkspace({
             <div className={styles.panelHeader}>
               <div>
                 <p className={styles.panelLabel}>Preview book</p>
-                <h2 className={styles.panelTitle}>This is a demo workspace</h2>
+                <h2 className={styles.panelTitle}>Try the reading flow</h2>
               </div>
               <Link href="/dashboard/books/new" className={styles.primaryButton}>
                 Upload your own book
               </Link>
             </div>
             <p className={styles.bookMeta}>
-              Real uploaded books will use this same layout, with their own searchable segments and session history.
+              Add your own book to ask questions, listen to answers, and save the parts you want to remember.
             </p>
           </article>
         )}
@@ -76,7 +76,7 @@ export function ReadingWorkspace({
         <article className={styles.panel}>
           <div className={styles.panelHeader}>
             <div>
-              <p className={styles.panelLabel}>Saved outputs</p>
+              <p className={styles.panelLabel}>Saved notes</p>
               <h3 className={styles.panelTitle}>Highlights and notes</h3>
             </div>
           </div>

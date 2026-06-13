@@ -12,9 +12,9 @@ import { createBook, saveBookSegments } from "@/lib/actions/book.actions";
 import { createPdfCoverFile, parsePDF, splitIntoSegments } from "@/lib/utils";
 
 const steps = [
-  { id: "file", label: "Book file", note: "Start with the PDF" },
+  { id: "file", label: "Choose book", note: "Start with your PDF" },
   { id: "details", label: "Book details", note: "Give it context" },
-  { id: "voice", label: "Voice persona", note: "Choose how it speaks" },
+  { id: "voice", label: "Reading voice", note: "Choose how it sounds" },
   { id: "review", label: "Review", note: "Confirm the setup" },
 ] as const;
 
@@ -114,7 +114,7 @@ export default function NewBookPage() {
     setIsSubmitting(true);
 
     try {
-      setStatusText("Extracting readable text from the PDF...");
+      setStatusText("Preparing your book for questions...");
       const pages = await parsePDF(pdfFile);
       const segments = splitIntoSegments(pages);
 
@@ -125,17 +125,17 @@ export default function NewBookPage() {
       let coverUpload: UploadResult | null = null;
       let pdfUpload: UploadResult | null = null;
 
-      setStatusText(coverFile ? "Uploading cover image to Cloudinary..." : "Generating cover from the first PDF page...");
+      setStatusText(coverFile ? "Saving your cover image..." : "Creating a cover from the first page...");
       const coverToUpload = coverFile ?? (await createPdfCoverFile(pdfFile));
-      setStatusText("Uploading cover image to Cloudinary...");
+      setStatusText("Saving your cover image...");
       coverUpload = await uploadMedia(coverToUpload, "cover");
 
       if (keepPdf) {
-        setStatusText("Uploading original PDF to Cloudinary...");
+        setStatusText("Keeping a copy of the original PDF...");
         pdfUpload = await uploadMedia(pdfFile, "pdf");
       }
 
-      setStatusText("Saving book metadata...");
+      setStatusText("Adding the book to your library...");
       const bookResult = await createBook({
         title,
         author,
@@ -152,16 +152,16 @@ export default function NewBookPage() {
       }
 
       if (bookResult.alreadyExists) {
-        toast.info("That book already exists. I updated any missing media and opened the existing workspace.");
+        toast.info("That book is already in your library. I opened it for you.");
         router.push(`/dashboard/books/${bookResult.data.slug}`);
         return;
       }
 
-      setStatusText("Saving searchable book segments...");
+      setStatusText("Making the book ready for conversation...");
       const segmentResult = await saveBookSegments(bookResult.data._id, segments);
 
       if (!segmentResult.success) {
-        throw new Error(segmentResult.error ?? "Failed to save book segments.");
+        throw new Error(segmentResult.error ?? "Failed to finish preparing this book.");
       }
 
       toast.success("Book created.");
@@ -194,13 +194,13 @@ export default function NewBookPage() {
       <PageHeader
         eyebrow="Upload"
         title="Add a book without the clutter"
-        description="The app extracts searchable text into MongoDB, stores the cover in Cloudinary, and only keeps the original PDF if you choose to preserve it."
+        description="Choose a PDF, add the details, pick a reading voice, and Bookworm will make it ready for questions."
       />
 
       <section className={styles.uploadWizardLayout}>
         <aside className={styles.uploadRail}>
           <div className={styles.uploadRailHeader}>
-            <p className={styles.panelLabel}>Setup flow</p>
+            <p className={styles.panelLabel}>Reading setup</p>
             <h3 className={styles.panelTitle}>Create a talking book</h3>
           </div>
 
@@ -228,7 +228,7 @@ export default function NewBookPage() {
           </div>
 
           <div className={styles.uploadChecklistCard}>
-            <p className={styles.panelLabel}>Storage plan</p>
+            <p className={styles.panelLabel}>What happens next</p>
             <div className={styles.stack}>
               {uploadChecklist.map((step) => (
                 <div key={step} className={styles.uploadMiniRow}>
@@ -271,7 +271,7 @@ export default function NewBookPage() {
                       <UploadCloud size={18} />
                     </div>
                     <strong>{pdfFile ? pdfFile.name : "Choose your PDF"}</strong>
-                    <p className={styles.bookMeta}>Required. The readable text will be extracted and saved as searchable MongoDB segments.</p>
+                    <p className={styles.bookMeta}>Required. Bookworm reads the file so you can ask questions later.</p>
                   </div>
                 </label>
 
@@ -288,7 +288,7 @@ export default function NewBookPage() {
                       <ImagePlus size={18} />
                     </div>
                     <strong>{coverFile ? coverFile.name : "Add cover image"}</strong>
-                    <p className={styles.bookMeta}>Optional. Covers are uploaded to Cloudinary and referenced from MongoDB.</p>
+                    <p className={styles.bookMeta}>Optional. A clear cover makes your library easier to scan.</p>
                   </div>
                 </label>
 
@@ -299,7 +299,7 @@ export default function NewBookPage() {
                     disabled={isSubmitting}
                     onChange={(event) => setKeepPdf(event.target.checked)}
                   />
-                  <span>Also keep the original PDF in Cloudinary</span>
+                  <span>Keep a copy of the original PDF</span>
                 </label>
               </div>
             ) : null}
@@ -323,7 +323,7 @@ export default function NewBookPage() {
                   </div>
                   <div>
                     <strong>Why these details matter</strong>
-                    <p className={styles.bookMeta}>This context improves summaries, search labels, and the way the assistant introduces the book.</p>
+                    <p className={styles.bookMeta}>These details help Bookworm answer with the right title, author, and tone.</p>
                   </div>
                 </div>
               </div>
@@ -364,7 +364,7 @@ export default function NewBookPage() {
                   <div className={styles.reviewCard}>
                     <p className={styles.panelLabel}>File</p>
                     <strong>{pdfFile?.name ?? "No PDF selected"}</strong>
-                    <p className={styles.bookMeta}>{keepPdf ? "PDF will be retained in Cloudinary" : "PDF will be parsed, then only text segments are retained"}</p>
+                    <p className={styles.bookMeta}>{keepPdf ? "A copy of the PDF will stay with this book." : "Bookworm will remember the readable parts needed for questions."}</p>
                   </div>
                   <div className={styles.reviewCard}>
                     <p className={styles.panelLabel}>Book details</p>
@@ -378,7 +378,7 @@ export default function NewBookPage() {
                   </div>
                   <div className={styles.reviewCard}>
                     <p className={styles.panelLabel}>Cover</p>
-                    <strong>{coverFile ? "Cloudinary upload" : "Auto-generated cover"}</strong>
+                    <strong>{coverFile ? "Custom cover" : "Cover from first page"}</strong>
                     <p className={styles.bookMeta}>{coverFile?.name ?? "First PDF page will be saved as the cover"}</p>
                   </div>
                 </div>
@@ -405,7 +405,7 @@ export default function NewBookPage() {
             </button>
 
             <button type="button" className={styles.primaryButton} onClick={continueFlow} disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : isLastStep ? "Create book" : "Continue"}
+              {isSubmitting ? "Adding..." : isLastStep ? "Add book" : "Continue"}
               {!isLastStep ? <ArrowRight size={16} /> : null}
             </button>
           </div>

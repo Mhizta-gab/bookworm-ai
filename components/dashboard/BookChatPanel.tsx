@@ -132,7 +132,7 @@ export function BookChatPanel({ bookId, bookTitle, starterPrompt }: BookChatPane
 
       setMessages((current) => [
         ...current,
-        { role: "assistant", content: payload.answer ?? "I could not answer from the retrieved passages." },
+        { role: "assistant", content: payload.answer ?? "I could not find a clear answer in this book." },
       ]);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to answer from this book.";
@@ -153,11 +153,11 @@ export function BookChatPanel({ bookId, bookTitle, starterPrompt }: BookChatPane
       <div className={styles.panelHeader}>
         <div>
           <p className={styles.panelLabel}>Ask the book</p>
-          <h3 className={styles.panelTitle}>Grounded text chat</h3>
+          <h3 className={styles.panelTitle}>Ask in writing</h3>
         </div>
         <span className={styles.statusPill}>
           <Sparkles size={15} />
-          Gemini
+          Bookworm
         </span>
       </div>
 
@@ -185,7 +185,7 @@ export function BookChatPanel({ bookId, bookTitle, starterPrompt }: BookChatPane
         </div>
       )}
 
-      {isSubmitting ? <p className={styles.bookMeta}>Searching the saved passages and composing an answer...</p> : null}
+      {isSubmitting ? <p className={styles.bookMeta}>Reading the book and writing an answer...</p> : null}
       {error ? <p className={styles.errorText}>{error}</p> : null}
 
       <form className={styles.chatComposer} onSubmit={handleSubmit}>

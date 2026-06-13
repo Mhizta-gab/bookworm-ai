@@ -55,26 +55,6 @@ export default function RootLayout({
               boxShadow: "3px 3px 0 rgba(0, 0, 0, 0.35)",
               padding: "12px 16px",
             },
-            successStyle: {
-              background: "#fffdfa",
-              color: "#181717",
-              borderColor: "#171717",
-            },
-            errorStyle: {
-              background: "#fffdfa",
-              color: "#b42318",
-              borderColor: "#b42318",
-            },
-            warningStyle: {
-              background: "#fffdfa",
-              color: "#d68422",
-              borderColor: "#d68422",
-            },
-            infoStyle: {
-              background: "#fffdfa",
-              color: "#6d67f0",
-              borderColor: "#6d67f0",
-            },
           }}
         />
       </body>

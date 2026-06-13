@@ -37,7 +37,6 @@ export default function RootLayout({
           richColors
           closeButton
           theme="light"
-          pauseWhenPageIsHidden
           toastOptions={{
             classNames: {
               toast: "sonner-toast",

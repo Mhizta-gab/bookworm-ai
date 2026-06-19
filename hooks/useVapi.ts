@@ -3,11 +3,23 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import Vapi from "@vapi-ai/web";
 import { ITranscriptMessage, VapiSessionStatus } from "@/types";
-import { VAPI_FIRST_MESSAGE, VAPI_SYSTEM_PROMPT, VOICE_PERSONAS } from "@/lib/constants";
+import {
+  ASSISTANT_ID,
+  DEFAULT_VOICE,
+  VAPI_FIRST_MESSAGE,
+  VOICE_SETTINGS,
+  getVoice,
+} from "@/lib/constants";
 import { startVoiceSession, endVoiceSession } from "@/lib/actions/session.actions";
+import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
 
 const VAPI_API_KEY = process.env.NEXT_PUBLIC_VAPI_API_KEY;
+const TIMER_INTERVAL_MS = 1000;
+const SECONDS_PER_MINUTE = 60;
+const TIME_WARNING_THRESHOLD = 60; // seconds remaining before warning
+
+// ─── Singleton Vapi client ────────────────────────────────────────────────────
 
 let vapiInstance: Vapi | null = null;
 function getVapiClient() {
@@ -22,19 +34,18 @@ function getVapiClient() {
   return vapiInstance;
 }
 
-interface StartSessionParams {
-  bookId: string;
-  bookTitle: string;
-  author: string;
-  voiceId?: string;
+// ─── useLatestRef helper ──────────────────────────────────────────────────────
+
+/** Keeps a ref in sync with the latest value without triggering re-renders. */
+export function useLatestRef<T>(value: T) {
+  const ref = useRef(value);
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref;
 }
 
-type TranscriptMessage = {
-  type?: string;
-  role?: "user" | "assistant" | "bot" | "model";
-  transcriptType?: "partial" | "final";
-  transcript?: string;
-};
+// ─── Error parsing helpers ────────────────────────────────────────────────────
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -77,13 +88,29 @@ function isExpectedRoomEndedError(error: unknown) {
   );
 }
 
+// ─── StartSession params ──────────────────────────────────────────────────────
+
+interface StartSessionParams {
+  bookId: string;
+  bookTitle: string;
+  author: string;
+  voiceId?: string;
+}
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
 export function useVapi() {
+  const { limits } = useSubscription();
+
   const [status, setStatus] = useState<VapiSessionStatus>("idle");
   const [messages, setMessages] = useState<ITranscriptMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
   const [currentUserMessage, setCurrentUserMessage] = useState("");
   const [duration, setDuration] = useState(0);
+  const [limitError, setLimitError] = useState<string | null>(null);
+  const [isBillingError, setIsBillingError] = useState(false);
 
+  // ── Refs ───────────────────────────────────────────────────────────────────
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const sessionIdRef = useRef<string | null>(null);
@@ -92,11 +119,16 @@ export function useVapi() {
   const ignoreRoomEndedErrorsUntilRef = useRef(0);
   const hasCallStartedRef = useRef(false);
 
+  // Keep refs in sync with latest state for use inside event callbacks
+  const maxDurationSeconds = limits.maxDurationPerSession * SECONDS_PER_MINUTE;
+  const maxDurationRef = useLatestRef(maxDurationSeconds);
+
   useEffect(() => {
     durationRef.current = duration;
   }, [duration]);
 
-  // Set up Vapi event listeners on mount
+  // ── Event handlers ─────────────────────────────────────────────────────────
+
   useEffect(() => {
     const client = getVapiClient();
     if (!client) return;
@@ -135,12 +167,27 @@ export function useVapi() {
       startTimeRef.current = Date.now();
       setDuration(0);
       if (timerRef.current) clearInterval(timerRef.current);
+
       timerRef.current = setInterval(() => {
-        if (startTimeRef.current) {
-          const newDuration = Math.floor((Date.now() - startTimeRef.current) / 1000);
-          setDuration(newDuration);
+        if (!startTimeRef.current) return;
+
+        const newDuration = Math.floor(
+          (Date.now() - startTimeRef.current) / TIMER_INTERVAL_MS
+        );
+        setDuration(newDuration);
+        durationRef.current = newDuration;
+
+        // Enforce per-session duration cap
+        if (newDuration >= maxDurationRef.current) {
+          const client = getVapiClient();
+          if (client) client.stop();
+          setLimitError(
+            `Session time limit (${Math.floor(
+              maxDurationRef.current / SECONDS_PER_MINUTE
+            )} min) reached. Upgrade your plan for longer sessions.`
+          );
         }
-      }, 1000);
+      }, TIMER_INTERVAL_MS);
     };
 
     const ensureCallStarted = () => {
@@ -170,19 +217,25 @@ export function useVapi() {
       }
     };
 
-    const handleMessage = (message: TranscriptMessage) => {
+    const handleMessage = (message: {
+      type?: string;
+      role?: "user" | "assistant" | "bot" | "model";
+      transcriptType?: "partial" | "final";
+      transcript?: string;
+    }) => {
       ensureCallStarted();
       if (message.type !== "transcript" || !message.role || !message.transcriptType) return;
       const transcript = message.transcript?.trim() ?? "";
       if (!transcript) return;
 
-      // Normalize role because Vapi sometimes uses 'bot' instead of 'assistant'
-      const role = (message.role === "bot" || message.role === "model") ? "assistant" : message.role;
+      // Normalize role — Vapi sometimes uses 'bot' instead of 'assistant'
+      const role =
+        message.role === "bot" || message.role === "model"
+          ? "assistant"
+          : message.role;
 
       if (role === "user" && message.transcriptType === "final") {
-        if (!isStoppingRef.current) {
-          setStatus("thinking");
-        }
+        if (!isStoppingRef.current) setStatus("thinking");
         setCurrentUserMessage("");
       }
 
@@ -220,7 +273,8 @@ export function useVapi() {
 
     const handleError = (error: unknown) => {
       if (isExpectedRoomEndedError(error)) {
-        const endedAfterConnection = hasCallStartedRef.current || isStoppingRef.current;
+        const endedAfterConnection =
+          hasCallStartedRef.current || isStoppingRef.current;
         resetCallState(endedAfterConnection ? "ended" : "idle");
         closeTrackedSession("room ended");
         hasCallStartedRef.current = false;
@@ -237,9 +291,16 @@ export function useVapi() {
       console.error("Vapi error:", error);
       resetCallState("idle");
 
-      toast.error(getVapiErrorText(error) || "Vapi error occurred");
+      // Show user-friendly error for common cases
+      const errorText = getVapiErrorText(error).toLowerCase();
+      if (errorText.includes("timeout") || errorText.includes("silence")) {
+        setLimitError("Session ended due to inactivity. Click the mic to start again.");
+      } else if (errorText.includes("network") || errorText.includes("connection")) {
+        setLimitError("Connection lost. Please check your internet and try again.");
+      } else {
+        toast.error(getVapiErrorText(error) || "Vapi error occurred");
+      }
 
-      // Ensure the client is stopped and the server session is closed
       try {
         if (client) client.stop();
       } catch (e) {
@@ -255,14 +316,21 @@ export function useVapi() {
       resetCallState("idle");
       closeTrackedSession("call start failure");
       hasCallStartedRef.current = false;
-      toast.error(getVapiErrorText(event) || "Voice call failed before connecting.");
+      
+      if (isExpectedRoomEndedError(event)) {
+        toast.error(
+          "Voice call ended before connecting. Check Vapi provider credentials and the selected voice."
+        );
+      } else {
+        toast.error(getVapiErrorText(event) || "Voice call failed before connecting.");
+      }
     };
 
     client.on("call-start", handleCallStart);
     client.on("call-end", handleCallEnd);
     client.on("speech-start", handleSpeechStart);
     client.on("speech-end", handleSpeechEnd);
-    client.on("message", handleMessage);
+    client.on("message", handleMessage as () => void);
     client.on("error", handleError);
     client.on("call-start-failed", handleCallStartFailed);
 
@@ -271,7 +339,7 @@ export function useVapi() {
       client.off("call-end", handleCallEnd);
       client.off("speech-start", handleSpeechStart);
       client.off("speech-end", handleSpeechEnd);
-      client.off("message", handleMessage);
+      client.off("message", handleMessage as () => void);
       client.off("error", handleError);
       client.off("call-start-failed", handleCallStartFailed);
 
@@ -279,7 +347,9 @@ export function useVapi() {
         clearInterval(timerRef.current);
       }
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── startSession ───────────────────────────────────────────────────────────
 
   const startSession = useCallback(
     async ({ bookId, bookTitle, author, voiceId }: StartSessionParams) => {
@@ -287,10 +357,12 @@ export function useVapi() {
       setMessages([]);
       setCurrentMessage("");
       setCurrentUserMessage("");
+      setLimitError(null);
+      setIsBillingError(false);
       isStoppingRef.current = false;
       hasCallStartedRef.current = false;
 
-      // Yield to the browser to ensure the "Connecting..." UI paints immediately
+      // Yield to browser so the "Connecting…" state paints before the async work
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       const client = getVapiClient();
@@ -300,124 +372,103 @@ export function useVapi() {
         return;
       }
 
+      // ── Server-side limit check & session creation ──────────────────────────
       try {
         const response = await startVoiceSession(bookId);
+
         if (!response.success || !response.sessionId) {
           setStatus("idle");
-          toast.error(response.error || "Failed to start session in database.");
+          if (response.isBillingError) {
+            setIsBillingError(true);
+            setLimitError(response.error ?? "Session limit reached. Please upgrade your plan.");
+          } else {
+            toast.error(response.error ?? "Failed to start session.");
+          }
           return;
         }
 
         sessionIdRef.current = response.sessionId;
 
+        // ── Build first message ───────────────────────────────────────────────
         const firstMessage = VAPI_FIRST_MESSAGE
           .replace("{{bookTitle}}", bookTitle)
           .replace("{{author}}", author);
 
-        const systemPrompt = VAPI_SYSTEM_PROMPT
-          .replace("{{bookTitle}}", bookTitle)
-          .replace("{{author}}", author);
+        // ── Resolve voice persona ─────────────────────────────────────────────
+        const voicePersona = getVoice(voiceId ?? DEFAULT_VOICE);
 
-        const voicePersona = VOICE_PERSONAS.find((vp) => vp.id === voiceId || vp.voiceId === voiceId) || VOICE_PERSONAS[0];
-
-        await client.start({
-          name: `${bookTitle} Voice Companion`.substring(0, 40),
+        // ── Start the pre-configured Vapi Dashboard assistant ─────────────────
+        // We only override firstMessage and variableValues —
+        // the system prompt, tools, voice, and LLM settings live on the dashboard.
+        await client.start(ASSISTANT_ID, {
           firstMessage,
-          clientMessages: ["transcript", "hang", "function-call", "speech-update", "metadata", "conversation-update"] as any,
-          voice: {
-            provider: "11labs",
-            voiceId: voicePersona.voiceId,
-            model: "eleven_turbo_v2_5",
-            stability: 0.45,
-            similarityBoost: 0.75,
-            style: 0,
-            useSpeakerBoost: true,
-            fallbackPlan: {
-              voices: [
-                {
-                  provider: "vapi",
-                  voiceId: "Elliot",
-                },
-              ],
-            },
+          variableValues: {
+            title: bookTitle,
+            author,
+            bookId,
           },
-          model: {
-            provider: "openai",
-            model: "gpt-4o-mini",
-            messages: [
-              {
-                role: "system",
-                content: systemPrompt,
-              },
-            ],
-            temperature: 0.3,
-            tools: [
-              {
-                type: "function",
-                function: {
-                  name: "searchBook",
-                  description: `Searches the content of the book "${bookTitle}" by ${author} to retrieve matching passages. Use this tool whenever the user asks about the content of the book, characters, plots, or key ideas.`,
-                  parameters: {
-                    type: "object",
-                    properties: {
-                      bookId: {
-                        type: "string",
-                        description: "The ID of the current book. Use the provided value.",
-                      },
-                      query: {
-                        type: "string",
-                        description: "The topic or sentence to lookup in the book content."
-                      }
-                    },
-                    required: ["query"]
-                  },
-                },
-                server: {
-                  url: `${window.location.origin}/api/vapi/search-book?bookId=${bookId}`,
-                }
-              }
-            ]
-          }
         });
 
-        // Ensure UI updates if the call-start event listener was missed or delayed
+        // Fallback: if call-start event fires before we reach this line, skip
         if (!hasCallStartedRef.current) {
-            hasCallStartedRef.current = true;
-            setStatus("speaking");
-            startTimeRef.current = Date.now();
-            setDuration(0);
-            if (timerRef.current) clearInterval(timerRef.current);
-            timerRef.current = setInterval(() => {
-                if (startTimeRef.current) {
-                    const newDuration = Math.floor((Date.now() - startTimeRef.current) / 1000);
-                    setDuration(newDuration);
-                }
-            }, 1000);
+          hasCallStartedRef.current = true;
+          setStatus("speaking");
+          startTimeRef.current = Date.now();
+          setDuration(0);
+          if (timerRef.current) clearInterval(timerRef.current);
+          timerRef.current = setInterval(() => {
+            if (!startTimeRef.current) return;
+            const newDuration = Math.floor(
+              (Date.now() - startTimeRef.current) / TIMER_INTERVAL_MS
+            );
+            setDuration(newDuration);
+            durationRef.current = newDuration;
+            if (newDuration >= maxDurationRef.current) {
+              getVapiClient()?.stop();
+              setLimitError(
+                `Session time limit (${Math.floor(
+                  maxDurationRef.current / SECONDS_PER_MINUTE
+                )} min) reached. Upgrade your plan for longer sessions.`
+              );
+            }
+          }, TIMER_INTERVAL_MS);
         }
       } catch (error) {
         console.error("Failed to start Vapi call:", error);
         setStatus("idle");
-        toast.error("Failed to start voice call.");
+        toast.error("Failed to start voice call. Please try again.");
       }
     },
-    []
+    [maxDurationRef] // maxDurationRef is stable (a ref object), but listed for clarity
   );
+
+  // ── stopSession ────────────────────────────────────────────────────────────
 
   const stopSession = useCallback(async () => {
     isStoppingRef.current = true;
     ignoreRoomEndedErrorsUntilRef.current = Date.now() + 5000;
     const client = getVapiClient();
-    if (client) {
-      client.stop();
-    }
+    if (client) client.stop();
     setStatus("ended");
   }, []);
+
+  // ── clearError ─────────────────────────────────────────────────────────────
+
+  const clearError = useCallback(() => {
+    setLimitError(null);
+    setIsBillingError(false);
+  }, []);
+
+  // ── Derived state ──────────────────────────────────────────────────────────
 
   const isActive =
     status === "connecting" ||
     status === "listening" ||
     status === "thinking" ||
     status === "speaking";
+
+  const remainingSeconds = Math.max(0, maxDurationSeconds - duration);
+  const showTimeWarning = isActive && remainingSeconds <= TIME_WARNING_THRESHOLD && remainingSeconds > 0;
 
   return {
     status,
@@ -426,8 +477,14 @@ export function useVapi() {
     currentUserMessage,
     duration,
     isActive,
+    limitError,
+    isBillingError,
+    maxDurationSeconds,
+    remainingSeconds,
+    showTimeWarning,
     startSession,
     stopSession,
+    clearError,
   };
 }
 

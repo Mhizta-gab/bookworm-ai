@@ -1,10 +1,12 @@
 "use client";
 
-import { Mic, MicOff, PhoneOff, Radio, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { Mic, MicOff, PhoneOff, Radio, Sparkles, AlertCircle, X, Clock } from "lucide-react";
 import { useVapi } from "@/hooks/useVapi";
 import Transcript from "@/components/Transcript";
 import type { VapiSessionStatus } from "@/types";
 import styles from "@/components/dashboard/dashboard.module.css";
+import Link from "next/link";
 
 interface VapiControlsProps {
   bookId: string;
@@ -24,16 +26,18 @@ const statusText: Record<VapiSessionStatus, string> = {
 };
 
 function formatDuration(totalSeconds: number) {
-  const minutes = Math.floor(totalSeconds / 60)
-    .toString()
-    .padStart(2, "0");
+  const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
   const seconds = (totalSeconds % 60).toString().padStart(2, "0");
   return `${minutes}:${seconds}`;
 }
 
-import { useState } from "react";
-
-export default function VapiControls({ bookId, bookTitle, author, voiceId, onSaveNote }: VapiControlsProps) {
+export default function VapiControls({
+  bookId,
+  bookTitle,
+  author,
+  voiceId,
+  onSaveNote,
+}: VapiControlsProps) {
   const {
     status,
     messages,
@@ -41,8 +45,14 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
     currentUserMessage,
     duration,
     isActive,
+    limitError,
+    isBillingError,
+    maxDurationSeconds,
+    remainingSeconds,
+    showTimeWarning,
     startSession,
     stopSession,
+    clearError,
   } = useVapi();
 
   const isConnecting = status === "connecting";
@@ -54,7 +64,6 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
       await stopSession();
       return;
     }
-
     await startSession({ bookId, bookTitle, author, voiceId });
   }
 
@@ -69,7 +78,7 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to summarize.");
-      
+
       setSummary(data.summary);
       onSaveNote(`Listening recap (${formatDuration(duration)})`, data.summary);
       alert("Recap saved to notes.");
@@ -94,6 +103,45 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
 
   return (
     <div className={styles.voiceControlSurface}>
+      {/* ── Limit / error banner ─────────────────────────────────────────── */}
+      {limitError && (
+        <div
+          className={styles.limitBanner}
+          role="alert"
+          aria-live="polite"
+          data-billing={isBillingError ? "true" : undefined}
+        >
+          <div className={styles.limitBannerInner}>
+            <AlertCircle size={16} className={styles.limitBannerIcon} />
+            <p className={styles.limitBannerText}>{limitError}</p>
+          </div>
+          <div className={styles.limitBannerActions}>
+            {isBillingError && (
+              <Link href="/dashboard/profile" className={styles.upgradeLink}>
+                Upgrade plan
+              </Link>
+            )}
+            <button
+              type="button"
+              className={styles.limitBannerDismiss}
+              onClick={clearError}
+              aria-label="Dismiss error"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Remaining time warning ───────────────────────────────────────── */}
+      {showTimeWarning && (
+        <div className={styles.timeWarningBanner} role="status" aria-live="polite">
+          <Clock size={14} />
+          <span>{formatDuration(remainingSeconds)} remaining in this session</span>
+        </div>
+      )}
+
+      {/* ── Voice hero ───────────────────────────────────────────────────── */}
       <div className={styles.voiceHero}>
         <div className={styles.voiceOrbWrap}>
           {isActive ? <span className={styles.voicePulseRing} aria-hidden="true" /> : null}
@@ -104,7 +152,13 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
             disabled={isConnecting}
             aria-label={isActive ? "End listening" : "Start listening"}
           >
-            {isConnecting ? <Radio size={30} /> : isActive ? <PhoneOff size={30} /> : <Mic size={30} />}
+            {isConnecting ? (
+              <Radio size={30} />
+            ) : isActive ? (
+              <PhoneOff size={30} />
+            ) : (
+              <Mic size={30} />
+            )}
           </button>
         </div>
 
@@ -113,7 +167,9 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
             <Sparkles size={15} />
             {statusText[status]}
           </span>
-          <h4 className={styles.voiceTitle}>{isActive ? "Live with the book" : "Start listening"}</h4>
+          <h4 className={styles.voiceTitle}>
+            {isActive ? "Live with the book" : "Start listening"}
+          </h4>
           <p className={styles.bookMeta}>
             {isActive
               ? "Ask naturally. Bookworm will use the book when it needs evidence."
@@ -122,6 +178,7 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
         </div>
       </div>
 
+      {/* ── Stats ────────────────────────────────────────────────────────── */}
       <div className={styles.voiceStats}>
         <div>
           <span className={styles.panelLabel}>Duration</span>
@@ -132,11 +189,18 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
           <strong>{messages.length} turns</strong>
         </div>
         <div>
-          <span className={styles.panelLabel}>Mode</span>
-          <strong>Voice</strong>
+          <span className={styles.panelLabel}>
+            {isActive ? "Remaining" : "Limit"}
+          </span>
+          <strong>
+            {isActive
+              ? formatDuration(remainingSeconds)
+              : formatDuration(maxDurationSeconds)}
+          </strong>
         </div>
       </div>
 
+      {/* ── Action buttons ───────────────────────────────────────────────── */}
       <div className={styles.buttonRow}>
         <button
           type="button"
@@ -147,7 +211,7 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
           {isActive ? <MicOff size={16} /> : <Mic size={16} />}
           {isConnecting ? "Connecting..." : isActive ? "End listening" : "Start listening"}
         </button>
-        
+
         {!isActive && messages.length > 0 && !summary && (
           <button
             type="button"
@@ -171,7 +235,12 @@ export default function VapiControls({ bookId, bookTitle, author, voiceId, onSav
         )}
       </div>
 
-      <Transcript messages={messages} currentMessage={currentMessage} currentUserMessage={currentUserMessage} />
+      {/* ── Transcript ───────────────────────────────────────────────────── */}
+      <Transcript
+        messages={messages}
+        currentMessage={currentMessage}
+        currentUserMessage={currentUserMessage}
+      />
     </div>
   );
 }

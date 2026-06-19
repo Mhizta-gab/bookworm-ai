@@ -1,19 +1,60 @@
 "use client";
-// useSubscription — tracks Vapi usage for the current billing period
-// Polls or caches the user's monthly minute usage
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getVoiceUsage } from "@/lib/actions/subscription.actions";
+import type { PlanLimits, PlanType } from "@/lib/subscription-constants";
 
-interface SubscriptionInfo {
+interface SubscriptionState {
+  plan: PlanType;
+  limits: PlanLimits;
+  sessionsUsed: number;
   minutesUsed: number;
-  minutesLimit: number;
   billingPeriodStart: Date;
+  isLoading: boolean;
 }
 
+// Sensible free-tier defaults while the server action loads
+const DEFAULT_LIMITS: PlanLimits = {
+  monthlySessions: 3,
+  monthlyMinutes: 30,
+  maxDurationPerSession: 10,
+};
+
 export function useSubscription() {
-  const [info, setInfo] = useState<SubscriptionInfo | null>(null);
+  const [state, setState] = useState<SubscriptionState>({
+    plan: "free",
+    limits: DEFAULT_LIMITS,
+    sessionsUsed: 0,
+    minutesUsed: 0,
+    billingPeriodStart: new Date(),
+    isLoading: true,
+  });
 
-  // TODO: Fetch subscription/usage info from server action or API route
+  useEffect(() => {
+    let cancelled = false;
 
-  return { info };
+    getVoiceUsage()
+      .then((usage) => {
+        if (cancelled) return;
+        setState({
+          plan: usage.plan,
+          limits: usage.limits,
+          sessionsUsed: usage.sessionsUsed,
+          minutesUsed: usage.minutesUsed,
+          billingPeriodStart: usage.billingPeriodStart,
+          isLoading: false,
+        });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("Failed to load subscription info:", err);
+        setState((prev) => ({ ...prev, isLoading: false }));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return state;
 }

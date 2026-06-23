@@ -1,6 +1,71 @@
-import { SEGMENT_WORD_LIMIT } from "@/lib/constants";
+import { SEGMENT_OVERLAP_WORDS, SEGMENT_WORD_LIMIT } from "@/lib/constants";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+
+type PdfTextItem = {
+  str: string;
+  transform: number[];
+  width?: number;
+  height?: number;
+  hasEOL?: boolean;
+};
+
+function normalizeExtractedText(value: string) {
+  return value
+    .normalize("NFKC")
+    .replace(/\u0000/g, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+function itemY(item: PdfTextItem) {
+  return Math.round((item.transform[5] ?? 0) * 10) / 10;
+}
+
+function itemX(item: PdfTextItem) {
+  return item.transform[4] ?? 0;
+}
+
+function extractPageText(items: PdfTextItem[]) {
+  const textItems = items
+    .filter((item) => item.str.trim())
+    .sort((a, b) => {
+      const yDelta = itemY(b) - itemY(a);
+      if (Math.abs(yDelta) > 2) return yDelta;
+      return itemX(a) - itemX(b);
+    });
+
+  const lines: string[] = [];
+  let currentLine: string[] = [];
+  let previousY: number | null = null;
+
+  for (const item of textItems) {
+    const y = itemY(item);
+    const startsNewLine = previousY !== null && Math.abs(y - previousY) > 2;
+
+    if (startsNewLine && currentLine.length) {
+      lines.push(currentLine.join(" "));
+      currentLine = [];
+    }
+
+    currentLine.push(item.str);
+    previousY = y;
+
+    if (item.hasEOL && currentLine.length) {
+      lines.push(currentLine.join(" "));
+      currentLine = [];
+      previousY = null;
+    }
+  }
+
+  if (currentLine.length) {
+    lines.push(currentLine.join(" "));
+  }
+
+  return normalizeExtractedText(lines.join("\n"));
+}
 
 export async function parsePDF(file: File): Promise<string[]> {
   if (typeof window === "undefined") {
@@ -15,19 +80,37 @@ export async function parsePDF(file: File): Promise<string[]> {
   ).toString();
 
   const arrayBuffer = await file.arrayBuffer();
-  const document = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const document = await pdfjsLib.getDocument({
+    data: arrayBuffer,
+    stopAtErrors: false,
+    disableFontFace: false,
+  }).promise;
   const pages: string[] = [];
 
   try {
     for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
       const page = await document.getPage(pageNumber);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .filter((item) => "str" in item)
-        .map((item) => (item as { str: string }).str)
-        .join(" ")
-        .replace(/\s+/g, " ")
-        .trim();
+      const textContent = await page.getTextContent({
+        includeMarkedContent: true,
+        disableNormalization: false,
+      });
+      const textItems: PdfTextItem[] = [];
+
+      for (const item of textContent.items) {
+        const candidate = item as Partial<PdfTextItem>;
+
+        if (typeof candidate.str === "string" && Array.isArray(candidate.transform)) {
+          textItems.push({
+            str: candidate.str,
+            transform: candidate.transform,
+            width: candidate.width,
+            height: candidate.height,
+            hasEOL: candidate.hasEOL,
+          });
+        }
+      }
+
+      const pageText = extractPageText(textItems);
 
       if (pageText) {
         pages.push(pageText);
@@ -87,7 +170,7 @@ export async function createPdfCoverFile(file: File): Promise<File> {
 export function splitIntoSegments(
   pages: string[],
   segmentSize: number = SEGMENT_WORD_LIMIT,
-  overlapSize: number = 50
+  overlapSize: number = SEGMENT_OVERLAP_WORDS
 ): string[] {
   const fullText = pages.join("\n");
   const words = fullText.split(/\s+/).filter((word) => word.length > 0);

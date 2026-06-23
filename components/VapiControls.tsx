@@ -19,6 +19,7 @@ interface VapiControlsProps {
 const statusText: Record<VapiSessionStatus, string> = {
   idle: "Ready",
   connecting: "Connecting",
+  starting: "Starting",
   listening: "Listening",
   thinking: "Thinking",
   speaking: "Speaking",

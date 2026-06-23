@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
+type TranscriptInput = {
+  role?: string;
+  content?: string;
+};
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -17,14 +22,17 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const transcripts = Array.isArray(body?.transcripts) ? body.transcripts : [];
+    const transcripts: TranscriptInput[] = Array.isArray(body?.transcripts) ? body.transcripts : [];
 
     if (transcripts.length === 0) {
       return NextResponse.json({ error: "No transcripts provided." }, { status: 400 });
     }
 
     const transcriptText = transcripts
-      .map((t: any) => `${t.role === "user" ? "User" : "Bookworm"}: ${t.content}`)
+      .map((transcript) => {
+        const speaker = transcript.role === "user" ? "User" : "Bookworm";
+        return `${speaker}: ${transcript.content ?? ""}`;
+      })
       .join("\n");
 
     const prompt = `Please summarize the following conversation between a User and a digital Book AI (Bookworm).

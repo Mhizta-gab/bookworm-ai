@@ -73,6 +73,23 @@ function getLegacyFunctionCall(body: unknown) {
   return message.functionCall ?? root.functionCall;
 }
 
+function getVariableBookId(body: unknown) {
+  const root = asRecord(body);
+  const message = asRecord(root.message);
+  const call = asRecord(message.call ?? root.call);
+  const artifact = asRecord(call.artifact);
+  const messageArtifact = asRecord(message.artifact);
+  const variableValues = asRecord(
+    message.variableValues ??
+      root.variableValues ??
+      call.variableValues ??
+      artifact.variableValues ??
+      messageArtifact.variableValues
+  );
+
+  return variableValues.bookId;
+}
+
 function getCallArgs(toolCall: unknown) {
   const call = asRecord(toolCall);
   const func = asRecord(call.function);
@@ -100,6 +117,7 @@ export async function POST(request: NextRequest) {
   try {
     const urlBookId = request.nextUrl.searchParams.get("bookId");
     const body = await request.json();
+    const variableBookId = getVariableBookId(body);
 
     const toolCallList = getToolCalls(body);
 
@@ -113,7 +131,7 @@ export async function POST(request: NextRequest) {
         const toolCallId = call.id ?? call.toolCallId;
 
         if (isSearchBookTool(name)) {
-          const searchResult = await processBookSearch(args.bookId ?? urlBookId, args.query);
+          const searchResult = await processBookSearch(args.bookId ?? urlBookId ?? variableBookId, args.query);
           results.push({ toolCallId: typeof toolCallId === "string" ? toolCallId : undefined, ...searchResult });
         } else {
           results.push({
@@ -134,7 +152,7 @@ export async function POST(request: NextRequest) {
       const legacyId = typeof call.id === "string" ? call.id : "legacy-function-call";
 
       if (isSearchBookTool(name)) {
-        const searchResult = await processBookSearch(parsed.bookId ?? urlBookId, parsed.query);
+        const searchResult = await processBookSearch(parsed.bookId ?? urlBookId ?? variableBookId, parsed.query);
         return NextResponse.json({
           results: [{ toolCallId: legacyId, ...searchResult }],
         });
@@ -147,7 +165,7 @@ export async function POST(request: NextRequest) {
 
     const directBody = asRecord(body);
     if (directBody.query || urlBookId) {
-      const searchResult = await processBookSearch(directBody.bookId ?? urlBookId, directBody.query);
+      const searchResult = await processBookSearch(directBody.bookId ?? urlBookId ?? variableBookId, directBody.query);
       return NextResponse.json({ results: [{ toolCallId: "direct-search", ...searchResult }] });
     }
 

@@ -5,6 +5,7 @@
 export type VapiSessionStatus =
   | "idle"
   | "connecting"
+  | "starting"
   | "listening"
   | "thinking"
   | "speaking"

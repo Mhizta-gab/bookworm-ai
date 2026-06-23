@@ -6,8 +6,6 @@ import VoiceSession from "@/database/models/voice-session.model";
 import { getBillingPeriodStart } from "@/lib/utils";
 import { getVoiceUsage } from "@/lib/actions/subscription.actions";
 
-// ─── Start session ────────────────────────────────────────────────────────────
-
 export async function startVoiceSession(bookId: string): Promise<{
   success: boolean;
   sessionId?: string;
@@ -22,7 +20,6 @@ export async function startVoiceSession(bookId: string): Promise<{
     return { success: false, error: "You must be signed in to start a voice session." };
   }
 
-  // ── Check plan limits before creating the session ──────────────────────────
   const usage = await getVoiceUsage();
   const { limits, sessionsUsed, minutesUsed } = usage;
 
@@ -42,7 +39,6 @@ export async function startVoiceSession(bookId: string): Promise<{
     };
   }
 
-  // ── Create the session record ──────────────────────────────────────────────
   const session = await VoiceSession.create({
     clerkId: userId,
     bookId,
@@ -57,8 +53,6 @@ export async function startVoiceSession(bookId: string): Promise<{
     maxDurationMinutes: limits.maxDurationPerSession,
   };
 }
-
-// ─── End session ─────────────────────────────────────────────────────────────
 
 export async function endVoiceSession(sessionId: string, durationSeconds = 0) {
   await connectDB();

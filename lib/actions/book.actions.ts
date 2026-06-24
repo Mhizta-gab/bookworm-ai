@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { connectDB } from "@/database/mongoose";
 import Book from "@/database/models/book.model";
 import BookSegment from "@/database/models/book-segment.model";
+import VoiceSession from "@/database/models/voice-session.model";
 import { generateSlug } from "@/lib/utils";
 import type { IBook } from "@/types";
 
@@ -149,6 +150,7 @@ export async function getAllBooks(options: BookQuery = {}) {
   const { userId } = await auth();
   const filter: Record<string, unknown> = {};
 
+  // ownerOnly defaults to true (my library), pass false for public library
   if (options.ownerOnly !== false) {
     if (!userId) return [];
     filter.clerkId = userId;
@@ -163,16 +165,71 @@ export async function getAllBooks(options: BookQuery = {}) {
   return serialize(books) as unknown as IBook[];
 }
 
-export async function getBookBySlug(slug: string) {
-  await connectDB();
-  const { userId } = await auth();
-  const filter: Record<string, unknown> = { slug };
+export type BookWithStats = IBook & { sessionCount: number; readerCount: number };
 
-  if (userId) {
-    filter.clerkId = userId;
+export async function getAllBooksPublic(query?: string): Promise<BookWithStats[]> {
+  await connectDB();
+  const filter: Record<string, unknown> = {};
+
+  if (query?.trim()) {
+    const regex = new RegExp(escapeRegex(query.trim()), "i");
+    filter.$or = [{ title: regex }, { author: regex }];
   }
 
-  const book = await Book.findOne(filter).lean();
+  const books = await Book.find(filter).sort({ updatedAt: -1 }).lean() as unknown as IBook[];
+  if (!books.length) return [];
+
+  const bookIds = books.map((b) => b._id);
+
+  // Count sessions and unique readers per book
+  const sessionAgg = await VoiceSession.aggregate<{ _id: string; sessions: number; readers: number }>([
+    { $match: { bookId: { $in: bookIds } } },
+    {
+      $group: {
+        _id: "$bookId",
+        sessions: { $sum: 1 },
+        readers: { $addToSet: "$clerkId" },
+      },
+    },
+    { $project: { sessions: 1, readers: { $size: "$readers" } } },
+  ]);
+
+  const statsMap = new Map(
+    sessionAgg.map((s) => [String(s._id), { sessionCount: s.sessions, readerCount: s.readers }])
+  );
+
+  // Deduplicate by title + author (case-insensitive)
+  // Pick the copy with the most segments as canonical; aggregate all stats
+  const deduped = new Map<string, BookWithStats>();
+
+  for (const book of books) {
+    const key = `${book.title.trim().toLowerCase()}__${book.author.trim().toLowerCase()}`;
+    const stats = statsMap.get(String(book._id)) ?? { sessionCount: 0, readerCount: 0 };
+
+    if (!deduped.has(key)) {
+      deduped.set(key, { ...book, ...stats });
+    } else {
+      const existing = deduped.get(key)!;
+      const merged = {
+        sessionCount: existing.sessionCount + stats.sessionCount,
+        readerCount: existing.readerCount + stats.readerCount,
+      };
+      // Prefer the copy with more segments (better processed)
+      if (book.totalSegments > existing.totalSegments) {
+        deduped.set(key, { ...book, ...merged });
+      } else {
+        deduped.set(key, { ...existing, ...merged });
+      }
+    }
+  }
+
+  return serialize(Array.from(deduped.values())) as unknown as BookWithStats[];
+}
+
+export async function getBookBySlug(slug: string) {
+  await connectDB();
+  // Books are public — no clerkId filter. Anyone can view any book detail page.
+  const book = await Book.findOne({ slug }).lean();
   return book ? (serialize(book) as unknown as IBook) : null;
 }
 

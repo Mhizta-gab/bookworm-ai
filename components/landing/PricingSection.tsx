@@ -1,6 +1,12 @@
 import styles from "@/app/page.module.css";
 import { pricingTiers } from "./content";
 
+const tierHrefs: Record<string, string> = {
+  "Start reading": "/sign-up",
+  "Upgrade": "/dashboard/billing",
+  "Coming soon": "#",
+};
+
 export function PricingSection() {
   return (
     <section className={styles.pricingSection} id="pricing">
@@ -13,7 +19,11 @@ export function PricingSection() {
                 <span>{tier.price}</span>
                 {tier.subprice ? <small>{tier.subprice}</small> : null}
               </div>
-              <a href="#cta" className={`${styles.pricingButton} ${tier.muted ? styles.pricingButtonMuted : ""}`}>
+              <a
+                href={tierHrefs[tier.cta] ?? "#"}
+                className={`${styles.pricingButton} ${tier.muted ? styles.pricingButtonMuted : ""}`}
+                aria-disabled={tier.muted}
+              >
                 {tier.cta}
               </a>
               <ul className={styles.pricingList}>
@@ -31,3 +41,4 @@ export function PricingSection() {
     </section>
   );
 }
+

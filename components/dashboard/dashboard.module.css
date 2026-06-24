@@ -521,7 +521,10 @@
   align-items: start;
 }
 
-.libraryCardGrid,
+.libraryCardGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .compactShelfGrid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -599,15 +602,121 @@
 
 .libraryCard {
   display: grid;
-  gap: 16px;
-  padding: 18px;
+  grid-template-rows: auto 1fr;
+  gap: 0;
+  padding: 0;        /* hero fills the top; footer handles its own padding */
   min-height: 100%;
+  overflow: hidden;
   transition: transform 150ms ease, box-shadow 150ms ease;
 }
 
 .libraryCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.09);
+}
+
+/* ── Full-bleed hero (cover image + overlays) ──────────────────────────────── */
+
+.libraryCardHero {
+  position: relative;
+  height: 210px;
+  overflow: hidden;
+  border-radius: 16px 16px 0 0;   /* match parent card radius */
+  background: linear-gradient(135deg, #86a8ff 0%, #cdd8ff 100%);
+}
+
+.libraryCoverGradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.04) 0%,
+    rgba(0, 0, 0, 0) 35%,
+    rgba(0, 0, 0, 0.68) 100%
+  );
+  z-index: 1;
+}
+
+.libraryCoverTop {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  z-index: 2;
+}
+
+.libraryCoverBottom {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 2;
+  display: grid;
+  gap: 3px;
+}
+
+.libraryCoverTitle {
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: #ffffff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+}
+
+.libraryCoverAuthor {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+}
+
+.libraryCoverStat {
+  display: grid;
+  text-align: right;
+  line-height: 1;
+}
+
+.libraryCoverStatNum {
+  font-size: 1.7rem;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+  line-height: 1;
+}
+
+.libraryCoverStatLabel {
+  font-size: 0.64rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.75);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+
+/* ── Card footer row ───────────────────────────────────────────────────────── */
+
+.libraryCardFooterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  min-height: 52px;
+}
+
+.libraryCardPills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
 }
 
 .libraryCardBody {
@@ -630,7 +739,9 @@
 }
 
 .libraryCardCover {
-  min-height: 170px;
+  aspect-ratio: 2 / 3;
+  min-height: unset;
+  overflow: hidden;
 }
 
 .bookCover {
@@ -649,7 +760,13 @@
 }
 
 .libraryCoverImage {
-  min-height: 138px;
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+}
+
+.libraryCardCover {
+  position: relative;
 }
 
 .bookCoverImage {
@@ -669,6 +786,14 @@
   line-height: 0.98;
   letter-spacing: -0.055em;
   font-weight: 850;
+}
+
+.libraryCardTitle {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 850;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
 }
 
 .bookMeta,
@@ -1363,6 +1488,10 @@
     grid-template-columns: 1fr;
   }
 
+  .libraryCardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .uploadRail {
     position: static;
   }
@@ -1479,7 +1608,6 @@
   .uploadHintCard,
   .reviewCard,
   .uploadSummaryCard,
-  .libraryCard,
   .currentBookCard,
   .memoryCard,
   .shelfSection {
@@ -1515,6 +1643,10 @@
   .personaList,
   .libraryCardBody {
     grid-template-columns: 1fr;
+  }
+
+  .libraryCardHero {
+    height: 180px;
   }
 
   .bookCover {
@@ -1560,7 +1692,7 @@
     box-shadow: 4px 4px 0 #181717;
     backdrop-filter: blur(14px);
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
   }
 
@@ -1621,4 +1753,151 @@
   color: #181717;
   border-color: rgba(24, 23, 23, 0.12);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Library controls ─────────────────────────────────────────────────────── */
+
+.libraryControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.librarySort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.surfaceFilterActive {
+  background: #181717;
+  color: #ffffff;
+  border-color: #181717;
+}
+
+/* ── Billing ──────────────────────────────────────────────────────────────── */
+
+.planBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 2px solid #171717;
+  border-radius: 6px;
+  background: #fffdfa;
+  color: #181717;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  box-shadow: 2px 2px 0 #181717;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  white-space: nowrap;
+}
+
+.planBadge:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #181717;
+}
+
+.planBadgeFree {
+  background: #fffdfa;
+}
+
+.planBadgeStandard {
+  background: #ffce43;
+}
+
+.planBadgePro {
+  background: #8293ff;
+  color: #ffffff;
+}
+
+.billingLayout {
+  display: grid;
+  gap: 28px;
+}
+
+.billingUsageGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.usageTile {
+  border: 1px solid rgba(24, 23, 23, 0.08);
+  background: #fffdfa;
+  border-radius: 16px;
+  padding: 22px;
+  display: grid;
+  gap: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.usageBarTrack {
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(24, 23, 23, 0.1);
+  overflow: hidden;
+}
+
+.usageBarFill {
+  height: 100%;
+  border-radius: 99px;
+  background: #6d67f0;
+  transition: width 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.usageBarFillWarning {
+  background: #c4641a;
+}
+
+.usageNumbers {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.usageCurrent {
+  font-size: 1.75rem;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.usageLimit {
+  font-size: 0.9rem;
+  color: #5c554d;
+}
+
+.pricingTableWrap {
+  border: 1px solid rgba(24, 23, 23, 0.08);
+  background: #fffdfa;
+  border-radius: 16px;
+  padding: 28px;
+  display: grid;
+  gap: 22px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+@media (max-width: 1080px) {
+  .billingUsageGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .billingUsageGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .usageTile,
+  .pricingTableWrap {
+    padding: 18px;
+  }
 }

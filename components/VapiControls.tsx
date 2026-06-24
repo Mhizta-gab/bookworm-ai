@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Mic, MicOff, PhoneOff, Radio, Sparkles, AlertCircle, X, Clock } from "lucide-react";
 import { useVapi } from "@/hooks/useVapi";
 import Transcript from "@/components/Transcript";
+import { RecommendationsPanel } from "@/components/RecommendationsPanel";
 import type { VapiSessionStatus } from "@/types";
 import styles from "@/components/dashboard/dashboard.module.css";
 import Link from "next/link";
@@ -118,7 +119,7 @@ export default function VapiControls({
           </div>
           <div className={styles.limitBannerActions}>
             {isBillingError && (
-              <Link href="/dashboard/profile" className={styles.upgradeLink}>
+              <Link href="/dashboard/billing" className={styles.upgradeLink}>
                 Upgrade plan
               </Link>
             )}
@@ -242,6 +243,15 @@ export default function VapiControls({
         currentMessage={currentMessage}
         currentUserMessage={currentUserMessage}
       />
+
+      {/* ── AI Recommendations (shown after session ends) ─────────────────── */}
+      {status === "ended" && messages.length > 0 && (
+        <RecommendationsPanel
+          bookTitle={bookTitle}
+          bookAuthor={author}
+          messages={messages}
+        />
+      )}
     </div>
   );
 }

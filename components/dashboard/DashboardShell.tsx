@@ -5,6 +5,7 @@ import {
   Bell,
   BookOpen,
   ChartColumnIncreasing,
+  CreditCard,
   Library,
   MessageSquare,
   Search,
@@ -13,21 +14,27 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./dashboard.module.css";
+import type { PlanType } from "@/lib/subscription-constants";
 
 const navItems = [
   { href: "/dashboard", label: "Desk", icon: ChartColumnIncreasing },
   { href: "/dashboard/library", label: "Library", icon: Library },
   { href: "/dashboard/books/new", label: "Add", icon: Plus },
+  { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
 ];
 
 export function DashboardShell({
   children,
   isSignedIn,
+  plan = "free",
 }: {
   children: React.ReactNode;
   isSignedIn: boolean;
+  plan?: PlanType;
 }) {
   const pathname = usePathname();
+  const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
+  const planBadgeClass = `planBadge${planLabel}` as keyof typeof styles;
 
   return (
     <div className={styles.shell}>
@@ -86,6 +93,14 @@ export function DashboardShell({
                 <Link href="/dashboard/books/new" className={styles.primaryButton}>
                   <Plus size={16} />
                   Add book
+                </Link>
+                <Link
+                  href="/dashboard/billing"
+                  className={`${styles.planBadge} ${styles[planBadgeClass]}`}
+                  aria-label={`Current plan: ${planLabel}`}
+                >
+                  <CreditCard size={12} />
+                  {planLabel}
                 </Link>
                 <div className={styles.dashboardUserButton}>
                   <UserButton />

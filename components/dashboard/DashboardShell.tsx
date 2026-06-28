@@ -1,13 +1,13 @@
 "use client";
 
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { Show, SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
 import {
   Bell,
   BookOpen,
   ChartColumnIncreasing,
   CreditCard,
   Library,
-  MessageSquare,
+  User,
   Search,
   Plus,
 } from "lucide-react";
@@ -33,6 +33,7 @@ export function DashboardShell({
   plan?: PlanType;
 }) {
   const pathname = usePathname();
+  const { user } = useUser();
   const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
   const planBadgeClass = `planBadge${planLabel}` as keyof typeof styles;
 
@@ -87,9 +88,13 @@ export function DashboardShell({
                 <button type="button" className={styles.iconButton} aria-label="Notifications">
                   <Bell size={16} />
                 </button>
-                <button type="button" className={styles.iconButton} aria-label="Messages">
-                  <MessageSquare size={16} />
-                </button>
+                <Link 
+                  href={`/dashboard/profile/${user?.username || user?.id || ""}`} 
+                  className={styles.iconButton} 
+                  aria-label="Profile"
+                >
+                  <User size={16} />
+                </Link>
                 <Link href="/dashboard/books/new" className={styles.primaryButton}>
                   <Plus size={16} />
                   Add book
@@ -112,24 +117,6 @@ export function DashboardShell({
 
         <main className={styles.main}>
           <div className={styles.mainInner}>
-            <div className={styles.topbar}>
-              <div className={styles.topbarMeta}>
-                <div>
-                  <p className={styles.topbarLabel}>Reading studio</p>
-                  <p className={styles.topbarTitle}>
-                    {isSignedIn ? "Your books, notes, and reading conversations" : "Sign in to keep your books close"}
-                  </p>
-                </div>
-              </div>
-
-              <div className={styles.topbarActions}>
-                <div className={styles.search}>
-                  <Search size={16} />
-                  <span>Search books, notes, and highlights</span>
-                </div>
-              </div>
-            </div>
-
             <div className={styles.page}>{children}</div>
           </div>
         </main>

@@ -1,4 +1,4 @@
-import { ArrowRight, AudioLines, Bookmark, BookOpen, Highlighter, UploadCloud } from "lucide-react";
+import { ArrowRight, AudioLines, BookOpen, UploadCloud } from "lucide-react";
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { BookLibraryCard } from "@/components/dashboard/BookLibraryCard";
@@ -98,23 +98,25 @@ export default async function HomePage() {
           </div>
 
           <div className={styles.memoryList}>
-            {transcriptPreview.slice(0, 2).map((row, index) => (
-              <div key={`${row.role}-${index}`} className={styles.memoryRow}>
-                <span className={styles.memoryRole}>{row.role}</span>
-                <p className={styles.memoryText}>{row.text}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className={styles.memoryActions}>
-            <button type="button" className={styles.ghostButton}>
-              <Bookmark size={15} />
-              Save note
-            </button>
-            <button type="button" className={styles.ghostButton}>
-              <Highlighter size={15} />
-              Highlight
-            </button>
+            {isDemoState ? (
+              transcriptPreview.slice(0, 2).map((row, index) => (
+                <div key={`${row.role}-${index}`} className={styles.memoryRow}>
+                  <span className={styles.memoryRole}>{row.role}</span>
+                  <p className={styles.memoryText}>{row.text}</p>
+                </div>
+              ))
+            ) : (
+              <>
+                <div className={styles.memoryRow}>
+                  <span className={styles.memoryRole}>YOU</span>
+                  <p className={styles.memoryText}>{currentBook.lastPrompt}</p>
+                </div>
+                <div className={styles.memoryRow}>
+                  <span className={styles.memoryRole}>BOOKWORM</span>
+                  <p className={styles.memoryText}>{currentBook.summary}</p>
+                </div>
+              </>
+            )}
           </div>
         </article>
       </section>

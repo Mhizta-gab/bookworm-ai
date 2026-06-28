@@ -6,12 +6,27 @@ import VoiceSession from "@/database/models/voice-session.model";
 import { getBillingPeriodStart } from "@/lib/utils";
 import { PLAN_LIMITS, PLANS, type PlanType } from "@/lib/subscription-constants";
 
+import UserSubscription from "@/database/models/user-subscription.model";
+
 export async function getUserPlan(): Promise<PlanType> {
-  const { has, userId } = await auth();
+  const { has, sessionClaims, userId } = await auth();
 
   if (!userId) return PLANS.FREE;
-  if (has({ plan: "pro" })) return PLANS.PRO;
-  if (has({ plan: "standard" })) return PLANS.STANDARD;
+
+  // 1. Check MongoDB UserSubscription (set via Paystack webhooks)
+  try {
+    await connectDB();
+    const sub = await UserSubscription.findOne({ clerkId: userId });
+    if (sub?.plan && (sub.plan === "pro" || sub.plan === "standard")) {
+      return sub.plan;
+    }
+  } catch (error) {
+    console.error("Error fetching user subscription from DB:", error);
+  }
+
+  // 2. Fallback to Clerk native claims
+  if (has({ plan: "pro" }) || (sessionClaims?.metadata as any)?.plan === "pro") return PLANS.PRO;
+  if (has({ plan: "standard" }) || (sessionClaims?.metadata as any)?.plan === "standard") return PLANS.STANDARD;
 
   return PLANS.FREE;
 }

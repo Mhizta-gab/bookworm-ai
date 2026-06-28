@@ -1,6 +1,6 @@
-import { PricingTable } from "@clerk/nextjs";
 import { CreditCard } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { PaystackPricingGrid } from "@/components/dashboard/PaystackPricingGrid";
 import styles from "@/components/dashboard/dashboard.module.css";
 import { getVoiceUsage } from "@/lib/actions/subscription.actions";
 
@@ -48,10 +48,10 @@ export default async function BillingPage() {
             </div>
             <p className={styles.bookMeta}>
               {plan === "free"
-                ? "You have access to 3 sessions and 30 minutes per month. Upgrade to unlock more."
+                ? "You have access to 3 sessions and 15 minutes per month. Upgrade to unlock more."
                 : plan === "standard"
-                  ? "30 sessions and 600 minutes per month. Upgrade to Pro for the full experience."
-                  : "Full access — 300 sessions and 3,000 minutes every month."}
+                  ? "15 sessions and 120 minutes per month. Upgrade to Pro for extended limits."
+                  : "Full access — 45 sessions and 450 minutes every month."}
             </p>
           </article>
 
@@ -107,7 +107,7 @@ export default async function BillingPage() {
               Upgrade or downgrade at any time. Upgrades take effect immediately.
             </p>
           </div>
-          <PricingTable />
+          <PaystackPricingGrid currentPlan={plan} />
         </section>
       </div>
     </>

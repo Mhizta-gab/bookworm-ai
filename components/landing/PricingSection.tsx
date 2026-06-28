@@ -1,11 +1,6 @@
 import styles from "@/app/page.module.css";
 import { pricingTiers } from "./content";
-
-const tierHrefs: Record<string, string> = {
-  "Start reading": "/sign-up",
-  "Upgrade": "/dashboard/billing",
-  "Coming soon": "#",
-};
+import { TryBookwormButton } from "./TryBookwormButton";
 
 export function PricingSection() {
   return (
@@ -19,13 +14,19 @@ export function PricingSection() {
                 <span>{tier.price}</span>
                 {tier.subprice ? <small>{tier.subprice}</small> : null}
               </div>
-              <a
-                href={tierHrefs[tier.cta] ?? "#"}
-                className={`${styles.pricingButton} ${tier.muted ? styles.pricingButtonMuted : ""}`}
-                aria-disabled={tier.muted}
-              >
-                {tier.cta}
-              </a>
+              {tier.cta === "Start reading" ? (
+                <TryBookwormButton className={`${styles.pricingButton} ${tier.muted ? styles.pricingButtonMuted : ""}`}>
+                  Start reading
+                </TryBookwormButton>
+              ) : (
+                <a
+                  href={tier.cta === "Upgrade" ? "/dashboard/billing" : "#"}
+                  className={`${styles.pricingButton} ${tier.muted ? styles.pricingButtonMuted : ""}`}
+                  aria-disabled={tier.muted}
+                >
+                  {tier.cta}
+                </a>
+              )}
               <ul className={styles.pricingList}>
                 {tier.features.map((feature) => (
                   <li key={feature}>

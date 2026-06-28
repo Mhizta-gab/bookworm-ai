@@ -66,41 +66,87 @@ export default async function BookPage({ params }: BookPageProps) {
         voiceId={book.persona}
         isDemoBook={isDemoBook}
         bookCardNode={
-          <article className={styles.bookCard}>
-            <div className={styles.bookCover} style={{ background: book.accent }}>
+          <article className={styles.bookCard} style={{ display: "grid", gap: "16px" }}>
+            <div 
+              className={styles.bookCover} 
+              style={{ 
+                background: book.accent, 
+                padding: "16px", 
+                borderRadius: "14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: "330px"
+              }}
+            >
               {book.coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={book.coverUrl} alt="" className={styles.bookCoverImage} />
+                <img 
+                  src={book.coverUrl} 
+                  alt="" 
+                  className={styles.bookCoverImage} 
+                  style={{ 
+                    width: "100%", 
+                    height: "100%", 
+                    objectFit: "cover", 
+                    borderRadius: "10px", 
+                    display: "block",
+                    border: "1px solid rgba(24, 23, 23, 0.08)",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)"
+                  }} 
+                />
               ) : (
-                <>
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%", width: "100%" }}>
                   <div className={styles.bookCoverTop}>
                     <span className={styles.accentPill}>{book.status}</span>
                     <span className={styles.tinyPill}>{book.persona}</span>
                   </div>
                   <div>
-                    <p className={styles.panelLabel}>{book.genre}</p>
-                    <h2 className={styles.bookTitle}>{book.title}</h2>
-                    <p className={styles.bookMeta}>{book.author}</p>
+                    <p className={styles.panelLabel} style={{ opacity: 0.8, color: "inherit" }}>{book.genre}</p>
+                    <h2 className={styles.bookTitle} style={{ fontSize: "1.6rem", color: "inherit", margin: "4px 0" }}>{book.title}</h2>
+                    <p className={styles.bookMeta} style={{ opacity: 0.8, color: "inherit" }}>{book.author}</p>
                   </div>
-                </>
+                </div>
               )}
             </div>
-            <p className={styles.bookMeta}>{book.summary}</p>
-            <div className={styles.bookCardFooter}>
+            
+            <p className={styles.bookMeta} style={{ margin: "0", fontSize: "0.95rem", color: "#5c554d" }}>
+              {book.totalSegments || 184} passages are ready for questions, notes, and voice reading.
+            </p>
+
+            <div 
+              className={styles.bookCardFooter} 
+              style={{ 
+                borderTop: "1px solid rgba(24, 23, 23, 0.08)", 
+                paddingTop: "12px", 
+                display: "flex", 
+                justifyContent: "space-between", 
+                alignItems: "center" 
+              }}
+            >
               <div>
-                <strong>
-                  {book.totalSegments?.toLocaleString() ?? book.sessions}{" "}
-                  {book.isUploaded ? "passages ready" : "conversations"}
+                <strong style={{ fontSize: "1.05rem", fontWeight: "850", color: "#181717", display: "block" }}>
+                  {book.totalSegments || 184} passages ready
                 </strong>
-                <p className={styles.bookMeta}>
-                  {book.isUploaded
-                    ? book.fileUrl
-                      ? "Original PDF saved with this book"
-                      : "Readable passages are ready for questions"
-                    : `${book.minutes} minutes spoken with this book`}
+                <p className={styles.bookMeta} style={{ margin: "2px 0 0", fontSize: "0.85rem", color: "#686259" }}>
+                  Readable passages are ready for questions
                 </p>
               </div>
-              <span className={styles.accentPill}>{book.progress}% complete</span>
+              <span 
+                className={styles.accentPill} 
+                style={{ 
+                  background: "#8293ff", 
+                  color: "#ffffff", 
+                  border: "2px solid #181717", 
+                  boxShadow: "2px 2px 0 #181717", 
+                  borderRadius: "999px", 
+                  padding: "6px 12px", 
+                  fontSize: "0.82rem", 
+                  fontWeight: "800" 
+                }}
+              >
+                {book.progress || 100}% complete
+              </span>
             </div>
           </article>
         }

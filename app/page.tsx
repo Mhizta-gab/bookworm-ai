@@ -1,3 +1,5 @@
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import styles from "./page.module.css";
 import { DarkBanner } from "@/components/landing/DarkBanner";
 import { LandingFooter } from "@/components/landing/Footer";
@@ -11,7 +13,12 @@ import { TickerStrips } from "@/components/landing/TickerStrips";
 import { UnderstandSection } from "@/components/landing/UnderstandSection";
 import { UploadSection } from "@/components/landing/UploadSection";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { userId } = await auth();
+  if (userId) {
+    redirect("/dashboard");
+  }
+
   return (
     <main className={styles.page}>
       <LandingNavbar />

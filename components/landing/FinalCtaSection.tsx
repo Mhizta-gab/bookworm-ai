@@ -1,5 +1,6 @@
 import { MessageCircle } from "lucide-react";
 import styles from "@/app/page.module.css";
+import { TryBookwormButton } from "./TryBookwormButton";
 
 export function FinalCtaSection() {
   return (
@@ -13,9 +14,7 @@ export function FinalCtaSection() {
               reading interactive
             </h2>
             <p>Bookworm AI stays with you wherever you read, so your next insight is always one question away.</p>
-            <a href="#pricing" className={styles.ctaButton}>
-              Try Bookworm
-            </a>
+            <TryBookwormButton className={styles.ctaButton} />
           </div>
           <div className={styles.phoneWrap}>
             <div className={styles.phone}>

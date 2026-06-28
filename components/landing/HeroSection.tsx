@@ -1,5 +1,6 @@
 import { ArrowRight, Circle } from "lucide-react";
 import styles from "@/app/page.module.css";
+import { TryBookwormButton } from "./TryBookwormButton";
 
 export function HeroSection() {
   return (
@@ -16,9 +17,7 @@ export function HeroSection() {
               Upload a PDF, ask questions out loud, and hear thoughtful answers back. Bookworm AI helps you read,
               revise, and remember without getting buried in pages.
             </p>
-            <a href="#cta" className={styles.ctaButton}>
-              Try Bookworm
-            </a>
+            <TryBookwormButton className={styles.ctaButton} />
           </div>
 
           <div className={styles.heroArtwork}>

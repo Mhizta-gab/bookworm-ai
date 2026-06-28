@@ -15,17 +15,17 @@ export type PlanLimits = {
 export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
   [PLANS.FREE]: {
     monthlySessions: 3,
-    monthlyMinutes: 30,
-    maxDurationPerSession: 10,
+    monthlyMinutes: 15,
+    maxDurationPerSession: 5,
   },
   [PLANS.STANDARD]: {
-    monthlySessions: 30,
-    monthlyMinutes: 600,
-    maxDurationPerSession: 30,
+    monthlySessions: 15,
+    monthlyMinutes: 120,
+    maxDurationPerSession: 15,
   },
   [PLANS.PRO]: {
-    monthlySessions: 300,
-    monthlyMinutes: 3000,
-    maxDurationPerSession: 60,
+    monthlySessions: 45,
+    monthlyMinutes: 450,
+    maxDurationPerSession: 30,
   },
 };

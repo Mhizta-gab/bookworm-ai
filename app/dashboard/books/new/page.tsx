@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AudioLines, ArrowLeft, ArrowRight, ImagePlus, Mic, UploadCloud } from "lucide-react";
+import { AudioLines, ArrowLeft, ArrowRight, CheckCircle2, FileText, ImagePlus, Mic, UploadCloud, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -47,6 +47,7 @@ export default function NewBookPage() {
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfProgress, setPdfProgress] = useState(0);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [keepPdf, setKeepPdf] = useState(false);
   const [title, setTitle] = useState("");
@@ -71,7 +72,11 @@ export default function NewBookPage() {
         : true;
 
   function handlePdfChange(file: File | null) {
-    if (!file) return setPdfFile(null);
+    if (!file) {
+      setPdfFile(null);
+      setPdfProgress(0);
+      return;
+    }
 
     if (file.type !== "application/pdf") {
       toast.error("Please upload a PDF file.");
@@ -84,6 +89,11 @@ export default function NewBookPage() {
     }
 
     setPdfFile(file);
+    setPdfProgress(10);
+    setTimeout(() => setPdfProgress(45), 150);
+    setTimeout(() => setPdfProgress(85), 300);
+    setTimeout(() => setPdfProgress(100), 450);
+
     if (!title.trim()) {
       setTitle(file.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " "));
     }
@@ -240,7 +250,17 @@ export default function NewBookPage() {
           </div>
         </aside>
 
-        <article className={styles.uploadModal}>
+        <article className={styles.uploadModal} style={{ position: "relative" }}>
+          {isSubmitting && (
+            <div className={styles.uploadProcessingOverlay}>
+              <div className={styles.uploadSpinner} />
+              <h2 className={styles.pageHeaderTitle} style={{ marginBottom: 10 }}>Processing Book</h2>
+              <p className={styles.bookMeta} style={{ fontSize: "1.1rem", fontWeight: 700, color: "#181717", maxWidth: 420 }}>
+                {statusText || "Preparing your book for AI interaction..."}
+              </p>
+            </div>
+          )}
+
           <div className={styles.uploadModalHeader}>
             <div>
               <p className={styles.panelLabel}>
@@ -258,24 +278,62 @@ export default function NewBookPage() {
           <div className={styles.uploadModalBody}>
             {stepIndex === 0 ? (
               <div className={styles.uploadStepPanel}>
-                <label className={styles.uploadDropzone}>
-                  <input
-                    className={styles.fileInput}
-                    type="file"
-                    accept="application/pdf"
-                    disabled={isSubmitting}
-                    onChange={(event) => handlePdfChange(event.target.files?.[0] ?? null)}
-                  />
-                  <div className={styles.stack}>
-                    <div className={styles.smallIconWrap}>
-                      <UploadCloud size={18} />
+                {!pdfFile ? (
+                  <label className={styles.uploadDropzone}>
+                    <input
+                      className={styles.fileInput}
+                      type="file"
+                      accept="application/pdf"
+                      disabled={isSubmitting}
+                      onChange={(event) => handlePdfChange(event.target.files?.[0] ?? null)}
+                    />
+                    <div className={styles.stack}>
+                      <div className={styles.smallIconWrap}>
+                        <UploadCloud size={18} />
+                      </div>
+                      <strong>Choose your PDF</strong>
+                      <p className={styles.bookMeta}>Required. Bookworm reads the file so you can ask questions later.</p>
                     </div>
-                    <strong>{pdfFile ? pdfFile.name : "Choose your PDF"}</strong>
-                    <p className={styles.bookMeta}>Required. Bookworm reads the file so you can ask questions later.</p>
-                  </div>
-                </label>
+                  </label>
+                ) : (
+                  <div className={styles.fileProgressCard}>
+                    <div className={styles.fileProgressHeader}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div className={styles.smallIconWrap} style={{ background: "#8293ff", color: "#fff" }}>
+                          <FileText size={18} />
+                        </div>
+                        <div>
+                          <strong>{pdfFile.name}</strong>
+                          <p className={styles.bookMeta} style={{ margin: 0 }}>
+                            {(pdfFile.size / (1024 * 1024)).toFixed(2)} MB • PDF Document
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handlePdfChange(null)}
+                        className={styles.limitBannerDismiss}
+                        title="Remove file"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
 
-                <label className={styles.uploadDropzone}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.84rem", fontWeight: 800 }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 5, color: pdfProgress === 100 ? "#2e7d32" : "#181717" }}>
+                        {pdfProgress === 100 ? <CheckCircle2 size={15} /> : null}
+                        {pdfProgress === 100 ? "PDF Ready for setup" : "Processing PDF..."}
+                      </span>
+                      <span>{pdfProgress}%</span>
+                    </div>
+
+                    <div className={styles.fileProgressBarTrack}>
+                      <div className={styles.fileProgressBarFill} style={{ width: `${pdfProgress}%` }} />
+                    </div>
+                  </div>
+                )}
+
+                <label className={styles.uploadDropzone} style={{ minHeight: pdfFile ? 140 : 232 }}>
                   <input
                     className={styles.fileInput}
                     type="file"

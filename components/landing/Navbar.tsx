@@ -2,6 +2,7 @@
 
 import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import styles from "@/app/page.module.css";
 import { Brand } from "./shared";
@@ -21,21 +22,21 @@ export function LandingNavbar() {
         </div>
         <div className={styles.navAuthActions}>
           <Show when="signed-out">
-            <SignInButton mode="modal">
+            <SignInButton mode="modal" fallbackRedirectUrl="/dashboard">
               <button type="button" className={styles.navTextButton}>
                 Sign in
               </button>
             </SignInButton>
-            <SignUpButton mode="modal">
+            <SignUpButton mode="modal" fallbackRedirectUrl="/dashboard">
               <button type="button" className={styles.ctaButton}>
                 Try Bookworm
               </button>
             </SignUpButton>
           </Show>
           <Show when="signed-in">
-            <a href="/library" className={styles.ctaButton}>
-              Open library
-            </a>
+            <Link href="/dashboard" className={styles.ctaButton}>
+              Go to Dashboard
+            </Link>
             <div className={styles.authUserButton}>
               <UserButton />
             </div>
@@ -63,21 +64,21 @@ export function LandingNavbar() {
             Pricing
           </a>
           <Show when="signed-out">
-            <SignInButton mode="modal">
+            <SignInButton mode="modal" fallbackRedirectUrl="/dashboard">
               <button type="button" className={styles.mobileMenuPlainButton} onClick={() => setIsOpen(false)}>
                 Sign in
               </button>
             </SignInButton>
-            <SignUpButton mode="modal">
+            <SignUpButton mode="modal" fallbackRedirectUrl="/dashboard">
               <button type="button" className={styles.mobileMenuCta} onClick={() => setIsOpen(false)}>
                 Try Bookworm
               </button>
             </SignUpButton>
           </Show>
           <Show when="signed-in">
-            <a href="/library" className={styles.mobileMenuCta} onClick={() => setIsOpen(false)}>
-              Open library
-            </a>
+            <Link href="/dashboard" className={styles.mobileMenuCta} onClick={() => setIsOpen(false)}>
+              Go to Dashboard
+            </Link>
             <div className={styles.mobileUserButton}>
               <UserButton />
             </div>

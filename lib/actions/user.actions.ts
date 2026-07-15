@@ -195,3 +195,25 @@ export async function updateUserBio(bio: string): Promise<{ success: boolean; er
   }
 }
 
+
+export async function updateUserGenres(genres: string[]): Promise<{ success: boolean; error?: string }> {
+  const { userId } = await auth();
+  if (!userId) return { success: false, error: "Unauthorized" };
+
+  const cleaned = genres.map((g) => g.trim()).filter(Boolean).slice(0, 6);
+
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    await client.users.updateUser(userId, {
+      publicMetadata: {
+        ...(user.publicMetadata ?? {}),
+        genres: cleaned,
+      },
+    });
+    return { success: true };
+  } catch (err: any) {
+    console.error("Failed to update genres:", err);
+    return { success: false, error: err?.message || "Failed to update genres" };
+  }
+}

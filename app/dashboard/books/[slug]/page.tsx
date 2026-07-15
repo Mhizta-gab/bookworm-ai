@@ -67,11 +67,11 @@ export default async function BookPage({ params }: BookPageProps) {
         isDemoBook={isDemoBook}
         bookCardNode={
           <article className={styles.bookCard} style={{ display: "grid", gap: "16px" }}>
-            <div 
-              className={styles.bookCover} 
-              style={{ 
-                background: book.accent, 
-                padding: "16px", 
+            <div
+              className={styles.bookCover}
+              style={{
+                background: book.accent,
+                padding: "16px",
                 borderRadius: "14px",
                 display: "flex",
                 alignItems: "center",
@@ -81,19 +81,19 @@ export default async function BookPage({ params }: BookPageProps) {
             >
               {book.coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img 
-                  src={book.coverUrl} 
-                  alt="" 
-                  className={styles.bookCoverImage} 
-                  style={{ 
-                    width: "100%", 
-                    height: "100%", 
-                    objectFit: "cover", 
-                    borderRadius: "10px", 
+                <img
+                  src={book.coverUrl}
+                  alt=""
+                  className={styles.bookCoverImage}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "10px",
                     display: "block",
                     border: "1px solid rgba(24, 23, 23, 0.08)",
                     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)"
-                  }} 
+                  }}
                 />
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%", width: "100%" }}>
@@ -109,19 +109,19 @@ export default async function BookPage({ params }: BookPageProps) {
                 </div>
               )}
             </div>
-            
+
             <p className={styles.bookMeta} style={{ margin: "0", fontSize: "0.95rem", color: "#5c554d" }}>
               {book.totalSegments || 184} passages are ready for questions, notes, and voice reading.
             </p>
 
-            <div 
-              className={styles.bookCardFooter} 
-              style={{ 
-                borderTop: "1px solid rgba(24, 23, 23, 0.08)", 
-                paddingTop: "12px", 
-                display: "flex", 
-                justifyContent: "space-between", 
-                alignItems: "center" 
+            <div
+              className={styles.bookCardFooter}
+              style={{
+                borderTop: "1px solid rgba(24, 23, 23, 0.08)",
+                paddingTop: "12px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
               }}
             >
               <div>
@@ -132,17 +132,17 @@ export default async function BookPage({ params }: BookPageProps) {
                   Readable passages are ready for questions
                 </p>
               </div>
-              <span 
-                className={styles.accentPill} 
-                style={{ 
-                  background: "#8293ff", 
-                  color: "#ffffff", 
-                  border: "2px solid #181717", 
-                  boxShadow: "2px 2px 0 #181717", 
-                  borderRadius: "999px", 
-                  padding: "6px 12px", 
-                  fontSize: "0.82rem", 
-                  fontWeight: "800" 
+              <span
+                className={styles.accentPill}
+                style={{
+                  background: "#8293ff",
+                  color: "#ffffff",
+                  border: "2px solid #181717",
+                  boxShadow: "2px 2px 0 #181717",
+                  borderRadius: "999px",
+                  padding: "6px 12px",
+                  fontSize: "0.82rem",
+                  fontWeight: "800"
                 }}
               >
                 {book.progress || 100}% complete

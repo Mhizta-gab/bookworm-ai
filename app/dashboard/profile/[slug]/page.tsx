@@ -20,11 +20,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   if (!profile) {
     return (
-      <div 
-        className={styles.stack} 
-        style={{ 
-          padding: "80px 24px", 
-          textAlign: "center", 
+      <div
+        className={styles.stack}
+        style={{
+          padding: "80px 24px",
+          textAlign: "center",
           alignItems: "center",
           gap: "24px"
         }}
@@ -50,33 +50,33 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         <div style={{ display: "flex", gap: "24px", alignItems: "flex-start", flexWrap: "wrap", marginBottom: "20px" }}>
           {profile.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img 
-              src={profile.imageUrl} 
-              alt={profile.name} 
-              style={{ 
-                width: "96px", 
-                height: "96px", 
-                borderRadius: "50%", 
-                border: "2px solid #181717", 
+            <img
+              src={profile.imageUrl}
+              alt={profile.name}
+              style={{
+                width: "96px",
+                height: "96px",
+                borderRadius: "50%",
+                border: "2px solid #181717",
                 boxShadow: "4px 4px 0 #181717",
-                objectFit: "cover" 
-              }} 
+                objectFit: "cover"
+              }}
             />
           ) : (
-            <div 
-              style={{ 
-                width: "96px", 
-                height: "96px", 
-                borderRadius: "50%", 
-                border: "2px solid #181717", 
-                background: "#8293ff", 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "center", 
-                fontSize: "2.5rem", 
-                color: "#ffffff", 
-                fontWeight: "bold", 
-                boxShadow: "4px 4px 0 #181717" 
+            <div
+              style={{
+                width: "96px",
+                height: "96px",
+                borderRadius: "50%",
+                border: "2px solid #181717",
+                background: "#8293ff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "2.5rem",
+                color: "#ffffff",
+                fontWeight: "bold",
+                boxShadow: "4px 4px 0 #181717"
               }}
             >
               {profile.name[0]}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { ITranscriptMessage } from "@/types";
 import styles from "@/components/dashboard/dashboard.module.css";
 
@@ -20,6 +21,12 @@ function CursorText({ text }: { text: string }) {
 
 export default function Transcript({ messages, currentMessage = "", currentUserMessage = "" }: TranscriptProps) {
   const hasContent = messages.length > 0 || currentMessage || currentUserMessage;
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to the latest message whenever content changes
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, currentMessage, currentUserMessage]);
 
   return (
     <div className={styles.voiceTranscript} aria-live="polite" aria-label="Live voice transcript">
@@ -63,6 +70,9 @@ export default function Transcript({ messages, currentMessage = "", currentUserM
           </div>
         </div>
       ) : null}
+
+      {/* Scroll anchor — always stays at the bottom of the transcript */}
+      <div ref={bottomRef} aria-hidden="true" />
     </div>
   );
 }

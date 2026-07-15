@@ -12,9 +12,9 @@ export default async function HomePage() {
   const { userId } = await auth();
   const realBooks = userId
     ? await getAllBooks().catch((error) => {
-        console.error("Failed to load dashboard books:", error);
-        return [];
-      })
+      console.error("Failed to load dashboard books:", error);
+      return [];
+    })
     : [];
   const books = realBooks.length ? toDashboardBooks(realBooks) : dashboardBooks;
   const currentBook = books[0];

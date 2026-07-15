@@ -12,6 +12,9 @@ export interface IBook extends Document {
   coverBlobKey?: string;
   fileSize: number;
   totalSegments: number;
+  genre?: string;
+  accent?: string;
+  isPublic?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +32,9 @@ const BookSchema = new Schema<IBook>(
     coverBlobKey: { type: String },
     fileSize: { type: Number, required: true },
     totalSegments: { type: Number, default: 0 },
+    genre: { type: String },
+    accent: { type: String },
+    isPublic: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

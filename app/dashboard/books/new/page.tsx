@@ -150,6 +150,7 @@ export default function NewBookPage() {
         title,
         author,
         persona,
+        isPublic: true,
         coverUrl: coverUpload?.url,
         coverBlobKey: coverUpload?.publicId,
         fileUrl: pdfUpload?.url,
@@ -278,6 +279,28 @@ export default function NewBookPage() {
           <div className={styles.uploadModalBody}>
             {stepIndex === 0 ? (
               <div className={styles.uploadStepPanel}>
+                <div 
+                  style={{ 
+                    background: "rgba(130, 147, 255, 0.08)", 
+                    border: "2px solid #181717", 
+                    borderRadius: "12px", 
+                    padding: "14px", 
+                    fontSize: "0.85rem", 
+                    color: "#181717",
+                    boxShadow: "2px 2px 0 #181717",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px"
+                  }}
+                >
+                  <strong style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    🌐 Community Library Shared Policy
+                  </strong>
+                  <span style={{ color: "#5c554d", lineHeight: 1.4 }}>
+                    To build our collective library, all books uploaded to Bookworm are public and visible to everyone. Please only upload documents you are happy to share.
+                  </span>
+                </div>
+
                 {!pdfFile ? (
                   <label className={styles.uploadDropzone}>
                     <input
@@ -434,10 +457,15 @@ export default function NewBookPage() {
                     <strong>{activePersona.name}</strong>
                     <p className={styles.bookMeta}>Prepared for grounded answers and chapter-level recall</p>
                   </div>
-                  <div className={styles.reviewCard}>
+                   <div className={styles.reviewCard}>
                     <p className={styles.panelLabel}>Cover</p>
                     <strong>{coverFile ? "Custom cover" : "Cover from first page"}</strong>
                     <p className={styles.bookMeta}>{coverFile?.name ?? "First PDF page will be saved as the cover"}</p>
+                  </div>
+                  <div className={styles.reviewCard}>
+                    <p className={styles.panelLabel}>Visibility</p>
+                    <strong>Public Community Library</strong>
+                    <p className={styles.bookMeta}>This book will be shared so everyone on Bookworm AI can discover and talk to it.</p>
                   </div>
                 </div>
 

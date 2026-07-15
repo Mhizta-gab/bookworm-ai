@@ -12,6 +12,7 @@ type CreateBookInput = {
   title: string;
   author: string;
   persona: string;
+  isPublic?: boolean;
   fileUrl?: string;
   fileBlobKey?: string;
   coverUrl?: string;
@@ -90,6 +91,7 @@ export async function createBook(data: CreateBookInput) {
       author: data.author.trim(),
       slug: generateSlug(data.title, data.author),
       persona: data.persona,
+      isPublic: data.isPublic ?? true,
       fileUrl: data.fileUrl,
       fileBlobKey: data.fileBlobKey,
       coverUrl: data.coverUrl ?? "/book-3d.png",
@@ -273,4 +275,30 @@ export async function searchBookSegments(bookId: string, query: string, limit = 
   }
 
   return serialize(segments);
+}
+
+
+export async function updateBookVisibility(bookId: string, isPublic: boolean) {
+  try {
+    await connectDB();
+    const { userId } = await auth();
+
+    if (!userId) {
+      return { success: false, error: "You must be signed in." };
+    }
+
+    const updated = await Book.findOneAndUpdate(
+      { _id: bookId, clerkId: userId },
+      { isPublic },
+      { new: true }
+    ).lean();
+
+    if (!updated) {
+      return { success: false, error: "Book not found or unauthorized." };
+    }
+
+    return { success: true, data: serialize(updated) as unknown as IBook };
+  } catch (error) {
+    return { success: false, error: getDatabaseErrorMessage(error) };
+  }
 }
